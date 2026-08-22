@@ -41,11 +41,17 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
     }
   }
   
-  const blob = await put(`uploads/${outName}`, finalBuf, {
-    access: 'public',
-  });
-  
-  return { outPath: blob.url, outName };
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(`uploads/${outName}`, finalBuf, {
+      access: 'public',
+    });
+    return { outPath: blob.url, outName };
+  } else {
+    // Local fallback when running offline/without Vercel Blob token
+    const outPath = path.join(uploadsDir, outName);
+    fs.writeFileSync(outPath, finalBuf);
+    return { outPath: `/uploads/${outName}`, outName };
+  }
 };
 
 // ─── JPG/IMAGE → PDF ─────────────────────────────────────
