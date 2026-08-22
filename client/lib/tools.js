@@ -83,7 +83,6 @@ export const TOOL_CATEGORIES = [
     emoji: <FileText size={24} />,
     color: 'from-sky-500 to-blue-600',
     tools: [
-      { id: 'word-to-pdf', label: 'Word to PDF', desc: 'Convert .docx/.doc to standard PDF', icon: <FileText size={24} />, endpoint: '/api/convert/word-to-pdf', accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'], 'application/msword': ['.doc'] } },
       { id: 'word-to-text', label: 'Word to Text', desc: 'Extract clean plain text from Word (.docx)', icon: <FileText size={24} />, endpoint: '/api/convert/word-to-text', accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'], 'application/msword': ['.doc'] } },
       { id: 'word-to-html', label: 'Word to HTML', desc: 'Convert Word documents to clean web HTML', icon: <FileCode size={24} />, endpoint: '/api/convert/word-to-html', accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'], 'application/msword': ['.doc'] } },
       { id: 'text-to-word', label: 'Text to Word', desc: 'Convert plain text (.txt) into formatted .docx Word file', icon: <FileText size={24} />, endpoint: '/api/convert/text-to-word', accept: { 'text/plain': ['.txt'] } },
