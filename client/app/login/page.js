@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Lock } from 'lucide-react';
+import { Lock, ArrowRight } from 'lucide-react';
 import AuthDbBanner from '@/components/AuthDbBanner';
 
 export default function LoginPage() {
@@ -38,28 +38,44 @@ export default function LoginPage() {
   return (
     <div className="auth-page page-shell">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.3 }}
         className="auth-card page-container--auth"
-        style={{ position: 'relative', zIndex: 5, width: '100%' }}
+        style={{ width: '100%' }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <span style={{ display: 'inline-flex', width: 64, height: 64, borderRadius: 18, background: 'rgba(37, 99, 235, 0.15)', border: '1px solid rgba(37, 99, 235, 0.3)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-            <Lock size={30} color="#38bdf8" />
-          </span>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>Sign In to PdfFlow</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Access your PDF conversion history across all your devices</p>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--border)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 14,
+            color: 'var(--text-primary)'
+          }}>
+            <Lock size={20} />
+          </div>
+          <h1 className="nexacore-section-title" style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', marginBottom: 6 }}>
+            Sign In to PdfFlow
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13.5 }}>
+            Access and synchronize your document processing history
+          </p>
         </div>
 
         <AuthDbBanner />
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Email Address
+            </label>
             <input
               type="email"
-              className="input-field"
+              className="option-input"
               placeholder="name@example.com"
               required
               value={email}
@@ -67,13 +83,13 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Password</label>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Password
+            </label>
             <input
               type="password"
-              className="input-field"
+              className="option-input"
               placeholder="••••••••"
               required
               value={password}
@@ -83,23 +99,25 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="btn-primary"
             disabled={loading}
-            style={{ width: '100%', marginTop: 8, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            className="btn-primary"
+            style={{ width: '100%', marginTop: 8, minHeight: 42, cursor: loading ? 'not-allowed' : 'pointer' }}
           >
-            <span>{loading ? 'Logging in...' : 'Log In'}</span>
+            <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+            <ArrowRight size={14} />
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--text-secondary)' }}>
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="navbar-text-link" style={{ color: '#38bdf8', fontWeight: 600, padding: 0 }}>
-            Sign Up
+          <Link href="/signup" style={{ color: 'var(--color-blue)', fontWeight: 600, textDecoration: 'none' }}>
+            Create Account
           </Link>
         </div>
-        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13 }}>
-          <Link href="/tools" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-            Use PDF tools without an account →
+
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <Link href="/" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            ← Back to Home
           </Link>
         </div>
       </motion.div>

@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Rocket } from 'lucide-react';
+import { UserPlus, ArrowRight } from 'lucide-react';
 import AuthDbBanner from '@/components/AuthDbBanner';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
@@ -20,12 +19,7 @@ export default function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) {
-      toast.error('All fields are required.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match.');
+      toast.error('Please fill in all fields.');
       return;
     }
 
@@ -50,28 +44,42 @@ export default function SignupPage() {
   return (
     <div className="auth-page page-shell">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.3 }}
         className="auth-card page-container--auth"
-        style={{ position: 'relative', zIndex: 5, width: '100%' }}
+        style={{ width: '100%' }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <span style={{ display: 'inline-flex', width: 64, height: 64, borderRadius: 18, background: 'rgba(37, 99, 235, 0.15)', border: '1px solid rgba(37, 99, 235, 0.3)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-            <Rocket size={30} color="#38bdf8" />
-          </span>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>Create an Account</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Sign up to access your processing history from any device</p>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--border)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 14,
+            color: 'var(--text-primary)'
+          }}>
+            <UserPlus size={20} />
+          </div>
+          <h1 className="nexacore-section-title" style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', marginBottom: 6 }}>
+            Create Account
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13.5 }}>
+            Sign up to sync your conversion history across devices
+          </p>
         </div>
 
         <AuthDbBanner />
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Full Name</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>Full Name</label>
             <input
               type="text"
-              className="input-field"
+              className="option-input"
               placeholder="John Doe"
               required
               value={name}
@@ -79,11 +87,11 @@ export default function SignupPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
             <input
               type="email"
-              className="input-field"
+              className="option-input"
               placeholder="name@example.com"
               required
               value={email}
@@ -91,44 +99,39 @@ export default function SignupPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Password</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>Password</label>
             <input
               type="password"
-              className="input-field"
-              placeholder="At least 6 characters"
+              className="option-input"
+              placeholder="••••••••"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Confirm Password</label>
-            <input
-              type="password"
-              className="input-field"
-              placeholder="Re-enter password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
-
           <button
             type="submit"
-            className="btn-primary"
             disabled={loading}
-            style={{ width: '100%', marginTop: 8, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            className="btn-primary"
+            style={{ width: '100%', marginTop: 8, minHeight: 42, cursor: loading ? 'not-allowed' : 'pointer' }}
           >
-            <span>{loading ? 'Creating Account...' : 'Sign Up Free'}</span>
+            <span>{loading ? 'Creating account...' : 'Create Account'}</span>
+            <ArrowRight size={14} />
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--text-secondary)' }}>
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
           Already have an account?{' '}
-          <Link href="/login" className="navbar-text-link" style={{ color: '#38bdf8', fontWeight: 600, padding: 0 }}>
-            Log In
+          <Link href="/login" style={{ color: 'var(--color-blue)', fontWeight: 600, textDecoration: 'none' }}>
+            Sign In
+          </Link>
+        </div>
+
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <Link href="/" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            ← Back to Home
           </Link>
         </div>
       </motion.div>

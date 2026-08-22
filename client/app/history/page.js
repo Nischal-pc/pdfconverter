@@ -4,10 +4,9 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { FolderOpen, File, Eye, Download } from 'lucide-react';
+import { FolderOpen, FileText, Download, Trash2, ArrowRight } from 'lucide-react';
 import { getToolById } from '@/lib/tools';
 import api from '@/lib/api';
-import { getApiBase } from '@/lib/apiBase';
 import { triggerFileDownload } from '@/lib/download';
 
 function loadLocalHistory() {
@@ -19,11 +18,10 @@ function loadLocalHistory() {
   }
 }
 
-// Files are deleted after 1 hour by the server cron job
 const isDownloadExpired = (createdAt) => {
   try {
     const age = Date.now() - new Date(createdAt).getTime();
-    return age > 60 * 60 * 1000; // 1 hour in ms
+    return age > 60 * 60 * 1000; // 1 hour
   } catch {
     return false;
   }
@@ -115,64 +113,75 @@ export default function HistoryPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="page-container" style={{ maxWidth: 850 }}>
+      <div className="page-container page-container--narrow" style={{ padding: '40px var(--page-gutter) 80px' }}>
         <div className="history-header">
           <div>
-            <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 6 }}>
-              My Conversion History
+            <span className="section-tagline">Activity &amp; Logs</span>
+            <h1 className="nexacore-section-title" style={{ fontSize: 'clamp(24px, 4vw, 36px)', marginBottom: 6 }}>
+              Document History
             </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-              {user ? `Signed in as ${user.name}. Your cloud and local history are shown. ` : 'Sign in to sync your history across devices. '}
-              Processed files are available for 1 hour, then automatically deleted for privacy.
+            <p className="nexacore-section-desc" style={{ fontSize: 13.5, maxWidth: 540 }}>
+              {user ? `Signed in as ${user.name}. Cloud and browser history synchronized. ` : 'History stored in local browser memory. '}
+              Processed files remain downloadable for 1 hour.
             </p>
           </div>
           {history.length > 0 && (
             <button
               type="button"
               onClick={handleClearAll}
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                color: '#ef4444',
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className="btn-danger"
+              style={{ padding: '7px 14px', fontSize: 12.5 }}
             >
-              Clear All
+              Clear All History
             </button>
           )}
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>Loading history…</div>
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
+            Loading history…
+          </div>
         ) : (
           <AnimatePresence mode="popLayout">
             {history.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 style={{
                   textAlign: 'center',
-                  padding: '80px 24px',
-                  background: 'var(--bg-secondary)',
-                  border: '1px dashed var(--border)',
-                  borderRadius: 20,
+                  padding: '64px 24px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ marginBottom: 16 }}><FolderOpen size={48} color="var(--text-muted)" /></div>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>No conversions yet</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>
-                  Use any PDF tool — merge, compress, convert, sign — and your processed files will appear here with a download link.
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  color: 'var(--text-muted)'
+                }}>
+                  <FolderOpen size={24} />
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  No Conversion History Yet
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, marginBottom: 24, maxWidth: 420, margin: '0 auto 24px', lineHeight: 1.6 }}>
+                  When you convert, compress, sign, or edit files, your download links and file details will appear here.
                 </p>
-                <Link href="/tools" className="btn-primary navbar-btn-link">
+                <Link href="/tools" className="btn-primary">
                   <span>Browse All PDF Tools</span>
+                  <ArrowRight size={14} />
                 </Link>
               </motion.div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {history.map((item, index) => {
                   const tool = getToolById(item.toolId);
                   const expired = item.downloadUrl && isDownloadExpired(item.createdAt);
@@ -180,68 +189,77 @@ export default function HistoryPage() {
                     <motion.div
                       key={item.id}
                       layout
-                      initial={{ opacity: 0, y: 15 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 30 }}
-                      transition={{ duration: 0.25, delay: index * 0.03 }}
-                      className="history-item"
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.2, delay: index * 0.02 }}
                       style={{
                         background: 'var(--bg-card)',
                         border: '1px solid var(--border)',
-                        borderRadius: 16,
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '14px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 14,
+                        flexWrap: 'wrap',
+                        boxShadow: 'var(--shadow-sm)',
                       }}
                     >
-                      <div className="history-item-body">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
                         <div style={{
-                          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                          background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 20, color: 'var(--accent)'
+                          width: 36,
+                          height: 36,
+                          borderRadius: 'var(--radius-sm)',
+                          flexShrink: 0,
+                          background: 'var(--border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--text-primary)'
                         }}>
-                          {tool?.icon || <File size={20} />}
+                          {tool?.icon || <FileText size={18} />}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                               {tool?.label || item.toolLabel}
                             </span>
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>•</span>
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
                               {formatTime(item.createdAt)}
                             </span>
                             {expired && (
                               <span style={{
-                                fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                                fontSize: 10.5, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
                                 background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)',
-                                color: '#f59e0b',
+                                color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.04em'
                               }}>
                                 Expired
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', wordBreak: 'break-word' }}>
+                          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             <span style={{ color: 'var(--text-muted)' }}>Input:</span> {item.inputFiles}
                           </div>
                         </div>
                       </div>
-                      <div className="history-item-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {item.downloadUrl && !expired && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => triggerFileDownload(item.downloadUrl, item.outputFile)}
-                              className="btn-primary"
-                              style={{ padding: '6px 12px', fontSize: 12.5 }}
-                            >
-                              <Download size={13} />
-                              <span>Download</span>
-                            </button>
-                          </>
+                          <button
+                            type="button"
+                            onClick={() => triggerFileDownload(item.downloadUrl, item.outputFile)}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: 12.5 }}
+                          >
+                            <Download size={13} />
+                            <span>Download</span>
+                          </button>
                         )}
                         {expired && tool && (
                           <Link href={`/tools/${item.toolId}`} style={{ textDecoration: 'none' }}>
                             <span className="btn-secondary" style={{ padding: '6px 12px', fontSize: 12.5 }}>
-                              Re-process →
+                              Re-run Tool →
                             </span>
                           </Link>
                         )}
@@ -252,7 +270,8 @@ export default function HistoryPage() {
                           style={{ padding: '6px 12px', fontSize: 12.5, color: '#ef4444' }}
                           title="Remove item"
                         >
-                          Delete
+                          <Trash2 size={13} />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </motion.div>
