@@ -46,6 +46,8 @@ export const TOOL_CATEGORIES = [
     color: 'from-amber-500 to-orange-600',
     tools: [
       { id: 'compress', label: 'Compress PDF', desc: 'Advanced DPI presets for smaller files', icon: <Minimize size={24} />, endpoint: '/api/pdf/compress', accept: { 'application/pdf': ['.pdf'] } },
+      { id: 'flatten', label: 'Flatten PDF', desc: 'Lock form fields & signatures into static vector pages', icon: <Layers size={24} />, endpoint: '/api/pdf/flatten', accept: { 'application/pdf': ['.pdf'] } },
+      { id: 'grayscale', label: 'PDF to Grayscale', desc: 'Convert color pages to monochrome to save printer ink', icon: <Droplet size={24} />, endpoint: '/api/pdf/grayscale', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'repair', label: 'Repair PDF', desc: 'Rebuild and fix corrupted PDF structure', icon: <Wrench size={24} />, endpoint: '/api/pdf/repair', accept: { 'application/pdf': ['.pdf'] } },
     ],
   },
@@ -124,6 +126,7 @@ export const TOOL_CATEGORIES = [
     tools: [
       { id: 'protect', label: 'Protect PDF', desc: 'Password & permission lock', icon: <Lock size={24} />, endpoint: '/api/pdf/protect', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'unlock', label: 'Unlock PDF', desc: 'Remove PDF password protection', icon: <Unlock size={24} />, endpoint: '/api/pdf/unlock', accept: { 'application/pdf': ['.pdf'] } },
+      { id: 'sanitize', label: 'Sanitize Metadata', desc: 'Wipe author, creator, software & EXIF tracking tags', icon: <Wand2 size={24} />, endpoint: '/api/pdf/sanitize', accept: { 'application/pdf': ['.pdf'] } },
     ],
   },
   {

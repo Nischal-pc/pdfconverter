@@ -916,11 +916,115 @@ exports.unlockPDF = async (req, res) => {
     });
 
     const outBytes = await doc.save();
-    const { outPath, outName } = saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
 
-    fs.existsSync(file.path) && fs.unlinkSync(file.path);
     res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: `Could not unlock PDF. Wrong password? ${err.message}` });
+  }
+};
+
+// ─── FLATTEN PDF ─────────────────────────────────────────
+exports.flattenPDF = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+    const doc = await PDFDocument.load(file.buffer, { ignoreEncryption: true });
+    try {
+      const form = doc.getForm();
+      form.flatten();
+    } catch {
+      // Document has no interactive form fields
+    }
+
+    const outBytes = await doc.save({ useObjectStreams: true });
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
+
+    res.json({
+      success: true,
+      filename: outName,
+      downloadUrl: outPath,
+      totalPages: doc.getPageCount(),
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Flatten PDF failed: ${err.message}` });
+  }
+};
+
+// ─── SANITIZE / STRIP METADATA ───────────────────────────
+exports.sanitizePDF = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+    const doc = await PDFDocument.load(file.buffer, { ignoreEncryption: true });
+
+    // Wipe all standard document info & metadata tags
+    doc.setTitle('');
+    doc.setAuthor('');
+    doc.setSubject('');
+    doc.setKeywords([]);
+    doc.setProducer('');
+    doc.setCreator('');
+    doc.setCreationDate(new Date(0));
+    doc.setModificationDate(new Date(0));
+
+    const outBytes = await doc.save({ useObjectStreams: true });
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
+
+    res.json({
+      success: true,
+      filename: outName,
+      downloadUrl: outPath,
+      totalPages: doc.getPageCount(),
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Sanitize PDF failed: ${err.message}` });
+  }
+};
+
+// ─── PDF TO GRAYSCALE ────────────────────────────────────
+exports.grayscalePDF = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+    const mupdf = await import('mupdf');
+    const sourceDoc = mupdf.Document.openDocument(file.buffer, 'application/pdf');
+    const pageCount = sourceDoc.countPages();
+
+    if (pageCount === 0) {
+      return res.status(400).json({ error: 'PDF contains no pages.' });
+    }
+
+    const newDoc = await PDFDocument.create();
+
+    for (let i = 0; i < pageCount; i++) {
+      const page = sourceDoc.loadPage(i);
+      const bounds = page.getBounds();
+      const width = bounds[2] - bounds[0];
+      const height = bounds[3] - bounds[1];
+
+      // Render page to grayscale pixmap
+      const pixmap = page.toPixmap(mupdf.Matrix.scale(2, 2), mupdf.ColorSpace.DeviceGray, false);
+      const jpegGrayBytes = Buffer.from(pixmap.asJPEG(85));
+
+      const embedded = await newDoc.embedJpg(jpegGrayBytes);
+      const newPage = newDoc.addPage([width, height]);
+      newPage.drawImage(embedded, { x: 0, y: 0, width, height });
+    }
+
+    const outBytes = await newDoc.save({ useObjectStreams: true });
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
+
+    res.json({
+      success: true,
+      filename: outName,
+      downloadUrl: outPath,
+      totalPages: pageCount,
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Grayscale conversion failed: ${err.message}` });
   }
 };
