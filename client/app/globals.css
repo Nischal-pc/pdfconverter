@@ -1707,7 +1707,7 @@ button {
   width: calc(100% - 48px);
   max-width: 1080px;
   height: 60px;
-  border-radius: 8px !important;
+  border-radius: 20px !important;
 
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.9);
