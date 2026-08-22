@@ -1,0 +1,17 @@
+{
+  "name": "PdfFlow — Private Document Tools",
+  "short_name": "PdfFlow",
+  "description": "Fast, private, and serverless document & PDF tools. Merge, convert, compress, sign, and OCR with zero file retention.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0F17",
+  "theme_color": "#0B0F17",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
