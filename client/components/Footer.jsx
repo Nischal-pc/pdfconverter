@@ -51,7 +51,7 @@ export default function Footer() {
             </div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {links.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: 13.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                <Link key={l.href} href={l.href} className="footer-nav-link">
                   {l.label}
                 </Link>
               ))}
@@ -59,11 +59,11 @@ export default function Footer() {
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-              Convert & Extract
+              Convert &amp; Extract
             </div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {convertLinks.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: 13.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                <Link key={l.href} href={l.href} className="footer-nav-link">
                   {l.label}
                 </Link>
               ))}
@@ -71,11 +71,11 @@ export default function Footer() {
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-              Organize & Secure
+              Organize &amp; Secure
             </div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {editLinks.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: 13.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                <Link key={l.href} href={l.href} className="footer-nav-link">
                   {l.label}
                 </Link>
               ))}

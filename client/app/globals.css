@@ -1402,11 +1402,15 @@ p {
 /* ========================================================================= */
 /* FOOTER & STATUS BANNER                                                    */
 /* ========================================================================= */
+/* ========================================================================= */
+/* FOOTER & STATUS BANNER                                                    */
+/* ========================================================================= */
 .site-footer {
   border-top: 1px solid var(--border);
   background: var(--bg-card);
-  padding: 40px var(--page-gutter) 24px;
-  margin-top: 48px;
+  padding: 48px var(--page-gutter) 28px;
+  margin-top: 0;
+  width: 100%;
 }
 
 .footer-inner {
@@ -1415,31 +1419,87 @@ p {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 36px;
-  padding-bottom: 28px;
+  align-items: flex-start;
+  gap: clamp(24px, 4vw, 48px);
+  padding-bottom: 36px;
   border-bottom: 1px solid var(--border);
 }
 
 .footer-brand {
-  max-width: 320px;
+  max-width: 340px;
+  flex: 1 1 280px;
+}
+
+.footer-brand p {
+  margin-top: 12px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 .footer-columns {
   display: flex;
   flex-wrap: wrap;
-  gap: 36px;
+  gap: clamp(24px, 4vw, 48px);
+  flex: 2 1 400px;
+  justify-content: flex-start;
+}
+
+.footer-columns > div {
+  min-width: 130px;
+}
+
+.footer-nav-link {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-nav-link:hover {
+  color: var(--text-primary);
 }
 
 .footer-bottom {
   max-width: var(--content-max);
-  margin: 16px auto 0;
+  margin: 20px auto 0;
   font-size: 12px;
   color: var(--text-muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
+  line-height: 1.5;
+}
+
+/* ========================================================================= */
+/* CTA BANNER & FINAL SECTION SPACING                                        */
+/* ========================================================================= */
+.nexacore-cta-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(32px, 5vw, 48px) clamp(20px, 4vw, 36px);
+  text-align: center;
+  margin: 48px 0 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.nexacore-cta-heading {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.nexacore-cta-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
 }
 
 .server-status-banner {

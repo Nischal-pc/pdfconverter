@@ -68,7 +68,7 @@ export default function ToolsDirectoryPage() {
         </div>
 
         {/* Tools Bento Grid */}
-        <motion.div layout className="tool-grid" style={{ marginBottom: 80 }}>
+        <motion.div layout className="tool-grid" style={{ marginBottom: 48 }}>
           <AnimatePresence>
             {filtered.map((tool, idx) => (
               <ToolCard key={tool.id} tool={tool} index={idx} />

@@ -31,7 +31,7 @@ export default function AboutPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="page-container page-container--narrow" style={{ padding: '40px 20px 80px' }}>
+      <div className="page-container page-container--narrow" style={{ padding: '40px var(--page-gutter) 48px' }}>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

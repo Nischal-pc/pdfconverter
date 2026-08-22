@@ -113,7 +113,7 @@ export default function HistoryPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="page-container page-container--narrow" style={{ padding: '40px var(--page-gutter) 80px' }}>
+      <div className="page-container page-container--narrow" style={{ padding: '40px var(--page-gutter) 48px' }}>
         <div className="history-header">
           <div>
             <span className="section-tagline">Activity &amp; Logs</span>
