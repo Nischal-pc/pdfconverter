@@ -1697,7 +1697,7 @@ button {
   color: var(--text-muted);
 }
 
-/* Navbar — Flat Clean Edge Bar */
+/* Navbar — Subtle Rounded Edge Bar */
 .navbar {
   position: fixed !important;
   top: 18px !important;
@@ -1707,7 +1707,7 @@ button {
   width: calc(100% - 48px);
   max-width: 1080px;
   height: 60px;
-  border-radius: 0px !important;
+  border-radius: 8px !important;
 
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.9);
@@ -1732,7 +1732,7 @@ button {
   top: 10px !important;
   max-width: 820px !important;
   height: 50px !important;
-  border-radius: 0px !important;
+  border-radius: 10px !important;
   background: rgba(255, 255, 255, 0.94) !important;
   border-color: rgba(255, 255, 255, 0.95) !important;
   box-shadow:
