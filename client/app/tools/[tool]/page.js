@@ -28,9 +28,6 @@ export default function ToolPage({ params }) {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="orb orb--tool-left" />
-      <div className="orb orb--tool-right" style={{ animationDelay: '-3s' }} />
-
       <div className="page-container page-container--narrow">
         <nav className="breadcrumb" aria-label="Breadcrumb">
           <Link href="/">Home</Link>

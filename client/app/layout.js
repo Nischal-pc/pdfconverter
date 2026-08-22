@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&family=Dancing+Script:wght@400;600;700&family=Caveat:wght@400;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
         <script
@@ -50,14 +50,16 @@ export default function RootLayout({ children }) {
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#1a1a28',
-                color: '#f0f0ff',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '12px',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontSize: '14px',
+                fontSize: '13px',
+                fontWeight: 500,
+                boxShadow: '0 8px 24px -4px rgba(0,0,0,0.3)',
               },
-              success: { iconTheme: { primary: '#D4AF37', secondary: '#0a0a0f' } },
+              success: { iconTheme: { primary: '#10b981', secondary: '#0B0F17' } },
               error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
             }}
           />

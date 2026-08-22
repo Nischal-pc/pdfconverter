@@ -115,9 +115,6 @@ export default function HistoryPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="orb orb--tool-left" />
-      <div className="orb orb--tool-right" style={{ animationDelay: '-4s', opacity: 0.5 }} />
-
       <div className="page-container" style={{ maxWidth: 850 }}>
         <div className="history-header">
           <div>

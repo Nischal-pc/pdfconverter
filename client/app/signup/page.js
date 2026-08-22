@@ -49,9 +49,6 @@ export default function SignupPage() {
 
   return (
     <div className="auth-page page-shell">
-      <div className="orb orb--hero-left" style={{ opacity: 0.6 }} />
-      <div className="orb orb--tool-right" style={{ opacity: 0.4, animationDelay: '-3s' }} />
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

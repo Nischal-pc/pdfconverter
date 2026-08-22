@@ -20,30 +20,27 @@ export default function ToolsDirectoryPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="orb orb--hero-left" style={{ opacity: 0.5 }} />
-      <div className="orb orb--hero-right" style={{ opacity: 0.3, animationDelay: '-3s' }} />
-
       <div className="page-container">
         {/* Header Section */}
-        <div style={{ textAlign: 'center', padding: '40px 0 20px', maxWidth: 720, margin: '0 auto' }}>
-          <span className="section-tagline">Convert · Organize · OCR · Edit · Sign · Protect</span>
-          <h1 className="nexacore-section-title" style={{ fontSize: 'clamp(32px, 5vw, 48px)' }}>
-            All Document & Image Tools, Free & Instant
+        <div style={{ textAlign: 'center', padding: '36px 0 20px', maxWidth: 700, margin: '0 auto' }}>
+          <span className="section-tagline">Utility Directory</span>
+          <h1 className="nexacore-section-title" style={{ fontSize: 'clamp(28px, 4.5vw, 44px)' }}>
+            Document & PDF Utilities
           </h1>
-          <p className="nexacore-section-desc" style={{ margin: '0 auto 28px' }}>
-            Convert between Word, PDF, Excel, Text, and Images, run OCR, sign, and edit — no account, no watermarks, no file limits.
+          <p className="nexacore-section-desc" style={{ margin: '0 auto 24px' }}>
+            Convert, organize, sign, and OCR documents with zero permanent file storage.
           </p>
 
           {/* Search Box */}
-          <div style={{ position: 'relative', maxWidth: 440, margin: '0 auto 36px' }}>
-            <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <div style={{ position: 'relative', maxWidth: 440, margin: '0 auto 28px' }}>
+            <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
-              placeholder="Search tools (e.g. word, excel, ocr, png, sign)..."
+              placeholder="Filter tools by keyword (e.g. Word, Excel, OCR, Sign)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-field"
-              style={{ paddingLeft: 46, borderRadius: 9999 }}
+              className="option-input"
+              style={{ paddingLeft: 40, borderRadius: 'var(--radius-sm)' }}
               aria-label="Search PDF tools"
             />
           </div>
