@@ -29,7 +29,17 @@ export default function Logo({ size = 28, showText = true, textSize = 19 }) {
         </defs>
       </svg>
       {showText && (
-        <span className="logo-text" style={{ fontWeight: 700, fontSize: textSize, color: '#0f172a', letterSpacing: '-0.03em' }}>
+        <span
+          className="logo-text"
+          style={{
+            fontWeight: 800,
+            fontSize: textSize,
+            color: 'var(--text-primary)',
+            fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif',
+            letterSpacing: '-0.03em',
+            lineHeight: 1,
+          }}
+        >
           PdfFlow
         </span>
       )}
