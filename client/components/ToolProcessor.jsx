@@ -13,7 +13,7 @@ import ProgressBar from './ProgressBar';
 import toast from 'react-hot-toast';
 import PDFPreview from './PDFPreview';
 import VisualPDFEditor from './VisualPDFEditor';
-import { triggerFileDownload } from '@/lib/download';
+import { triggerFileDownload, viewFileInBrowser } from '@/lib/download';
 import { Eye, Download, PenTool, SlidersHorizontal } from 'lucide-react';
 
 export default function ToolProcessor({ tool }) {
@@ -511,13 +511,14 @@ export default function ToolProcessor({ tool }) {
                         <span style={{ color: 'var(--text-primary)' }}>
                           {file.filename.split('-').slice(1).join('-')} {file.pages ? `(Pages: ${file.pages})` : ''}
                         </span>
-                        <a
-                          href={`${getApiBase()}/api/download/${file.downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}?name=${encodeURIComponent(file.filename || `extracted-page-${i + 1}.pdf`)}`}
-                          download={file.filename || `extracted-page-${i + 1}.pdf`}
-                          style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
+                        <button
+                          type="button"
+                          onClick={() => triggerFileDownload(file.downloadUrl, file.filename || `extracted-page-${i + 1}.pdf`)}
+                          className="btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: 12 }}
                         >
                           Download
-                        </a>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -527,28 +528,26 @@ export default function ToolProcessor({ tool }) {
               <div className="result-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {result.downloadUrl && (
                   <>
-                    <a
-                      href={`${getApiBase()}/uploads/${result.downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => viewFileInBrowser(result.downloadUrl)}
                       className="btn-primary"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', cursor: 'pointer' }}
                     >
                       <Eye size={16} />
                       <span>View in Browser</span>
-                    </a>
-                    <a
-                      href={`${getApiBase()}/uploads/${result.downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}`}
-                      download={result.filename || 'Processed-Document.pdf'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerFileDownload(result.downloadUrl, result.filename || 'Processed-Document.pdf')}
                       className="btn-secondary"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', cursor: 'pointer' }}
                     >
                       <Download size={16} />
                       <span>Download File</span>
-                    </a>
+                    </button>
                   </>
                 )}
                 <button
+                  type="button"
                   className="btn-secondary"
                   onClick={() => { setFiles([]); setOrderedFiles([]); setResult(null); }}
                 >
