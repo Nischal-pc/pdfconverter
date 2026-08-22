@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import PDFPreview from './PDFPreview';
 import VisualPDFEditor from './VisualPDFEditor';
 import { triggerFileDownload } from '@/lib/download';
-import { Eye, Download } from 'lucide-react';
+import { Eye, Download, PenTool, SlidersHorizontal } from 'lucide-react';
 
 export default function ToolProcessor({ tool }) {
   const { user } = useAuth();
@@ -277,18 +277,20 @@ export default function ToolProcessor({ tool }) {
                       <button
                         type="button"
                         className={`sig-tab-btn ${editorMode === 'visual' ? 'active' : ''}`}
-                        style={{ padding: '4px 12px', fontSize: 12 }}
+                        style={{ padding: '4px 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                         onClick={() => setEditorMode('visual')}
                       >
-                        ✍️ Sign &amp; Type Anywhere
+                        <PenTool size={13} />
+                        <span>Sign &amp; Type Anywhere</span>
                       </button>
                       <button
                         type="button"
                         className={`sig-tab-btn ${editorMode === 'batch' ? 'active' : ''}`}
-                        style={{ padding: '4px 12px', fontSize: 12 }}
+                        style={{ padding: '4px 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                         onClick={() => setEditorMode('batch')}
                       >
-                        ⚙️ Batch Options
+                        <SlidersHorizontal size={13} />
+                        <span>Batch Options</span>
                       </button>
                     </div>
                   )}
