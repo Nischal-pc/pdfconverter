@@ -9,12 +9,15 @@ export function triggerFileDownload(downloadUrl, filename = 'Signed-Document.pdf
 
   const base = getApiBase();
   let staticUrl = downloadUrl;
-  if (!downloadUrl.startsWith('http')) {
+  
+  if (downloadUrl.startsWith('data:')) {
+    staticUrl = downloadUrl;
+  } else if (!downloadUrl.startsWith('http')) {
     const fileKey = downloadUrl.replace(/^\/(uploads|api\/download)\//, '');
     staticUrl = `${base}/uploads/${fileKey}`;
   }
 
-  const urlExtMatch = downloadUrl.match(/\.([a-zA-Z0-9]+)$/);
+  const urlExtMatch = filename.match(/\.([a-zA-Z0-9]+)$/) || downloadUrl.match(/\.([a-zA-Z0-9]+)$/);
   const realExt = urlExtMatch ? `.${urlExtMatch[1].toLowerCase()}` : '.pdf';
 
   let cleanName = (filename || `Document${realExt}`).trim();

@@ -42,16 +42,35 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
   }
   
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`uploads/${outName}`, finalBuf, {
-      access: 'public',
-    });
-    return { outPath: blob.url, outName };
-  } else {
-    // Local fallback when running offline/without Vercel Blob token
-    const outPath = path.join(uploadsDir, outName);
-    fs.writeFileSync(outPath, finalBuf);
-    return { outPath: `/uploads/${outName}`, outName };
+    try {
+      const blob = await put(`uploads/${outName}`, finalBuf, {
+        access: 'public',
+      });
+      return { outPath: blob.url, outName };
+    } catch (blobErr) {
+      console.warn('Vercel Blob failed, falling back to browser memory:', blobErr.message);
+    }
   }
+  
+  if (!process.env.VERCEL) {
+    try {
+      const outPath = path.join(uploadsDir, outName);
+      fs.writeFileSync(outPath, finalBuf);
+      return { outPath: `/uploads/${outName}`, outName };
+    } catch {}
+  }
+
+  // Direct In-Browser / Chrome memory delivery (No external cloud storage needed)
+  const mimeType = ext === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    : ext === '.xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    : ext === '.txt' ? 'text/plain;charset=utf-8'
+    : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+    : ext === '.png' ? 'image/png'
+    : ext === '.zip' ? 'application/zip'
+    : 'application/pdf';
+
+  const dataUrl = `data:${mimeType};base64,${finalBuf.toString('base64')}`;
+  return { outPath: dataUrl, outName };
 };
 
 // ─── JPG/IMAGE → PDF ─────────────────────────────────────
