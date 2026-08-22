@@ -15,7 +15,11 @@ export default function ToolCard({ tool, index = 0 }) {
     >
       <Link href={`/tools/${tool.id}`} className="tool-card-link">
         <div className="tool-card-inner">
-          {/* Card Header with Icon & Optional Badge */}
+          {tool.multi && (
+            <span className="tool-card-badge">Batch</span>
+          )}
+
+          {/* Fixed-height Icon Container */}
           <div className="tool-card-top">
             <div
               className="tool-card-icon-wrapper"
@@ -26,9 +30,6 @@ export default function ToolCard({ tool, index = 0 }) {
                 {tool.icon}
               </div>
             </div>
-            {tool.multi && (
-              <span className="tool-card-badge">Batch</span>
-            )}
           </div>
 
           {/* Text content */}

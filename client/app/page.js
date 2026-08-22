@@ -23,19 +23,36 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('popular');
 
-  const filteredTools = activeCategory === 'all'
+  const popularToolIds = [
+    'word-to-pdf',
+    'merge',
+    'compress',
+    'sign-pdf',
+    'pdf-to-excel',
+    'split',
+    'jpg-to-pdf',
+    'image-to-text',
+  ];
+
+  const popularTools = popularToolIds
+    .map((id) => ALL_TOOLS.find((t) => t.id === id))
+    .filter(Boolean);
+
+  const filteredTools = activeCategory === 'popular'
+    ? popularTools
+    : activeCategory === 'all'
     ? ALL_TOOLS
     : ALL_TOOLS.filter((t) => t.categoryId === activeCategory);
 
-  // Quick Action Launchers in Hero
+  // Quick Action Launchers in Hero (Symmetrical 6 items for 3x2 grid)
   const heroQuickChips = [
     { label: 'Word to PDF', icon: <FileText size={14} />, href: '/tools/word-to-pdf' },
     { label: 'PDF to Excel', icon: <Table size={14} />, href: '/tools/pdf-to-excel' },
     { label: 'Sign & Fill PDF', icon: <PenTool size={14} />, href: '/tools/sign-pdf' },
     { label: 'Compress PDF', icon: <Minimize size={14} />, href: '/tools/compress' },
-    { label: 'JPG ↔ PNG', icon: <ImageIcon size={14} />, href: '/tools/jpg-to-png' },
+    { label: 'JPG to PDF', icon: <ImageIcon size={14} />, href: '/tools/jpg-to-pdf' },
     { label: 'Image OCR Text', icon: <Wand2 size={14} />, href: '/tools/image-to-text' },
   ];
 
@@ -53,7 +70,7 @@ export default function Home() {
     <div className="page-shell">
 
       {/* ========================================================================= */}
-      {/* 1. HERO SECTION — Honest, Task-Oriented Direct Utility                    */}
+      {/* 1. HERO SECTION — Clear Focal Point & Balanced Launchers                  */}
       {/* ========================================================================= */}
       <section className="hero-section">
         <HeroPerspectiveFan />
@@ -91,12 +108,25 @@ export default function Home() {
             Fast, private document tools with zero file retention. Process files in ephemeral memory and directly on your device — no accounts, no file limits, no paywalls.
           </motion.p>
 
-          {/* Quick Action Chips */}
+          {/* Primary Call to Action */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            style={{ marginBottom: 20 }}
+          >
+            <Link href="/tools/word-to-pdf" className="btn-primary" style={{ padding: '12px 28px', fontSize: 14 }}>
+              <span>Convert Word to PDF Free →</span>
+            </Link>
+          </motion.div>
+
+          {/* Quick Action Symmetrical 3x2 Grid */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
             className="hero-quick-chips-wrap"
+            aria-label="Popular Quick Actions"
           >
             {heroQuickChips.map((chip, i) => (
               <Link key={i} href={chip.href} className="hero-quick-chip">
@@ -137,16 +167,27 @@ export default function Home() {
         <section className="bento-explorer-section" id="tools">
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
             <span className="section-tagline">Utility Directory</span>
-            <h2 className="nexacore-section-title">All Document & PDF Tools</h2>
+            <h2 className="nexacore-section-title">Document &amp; PDF Tools</h2>
             <p className="nexacore-section-desc" style={{ margin: '0 auto', maxWidth: 580 }}>
               Select a module below to start processing files immediately.
             </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="bento-filter-bar">
+          {/* Horizontal Scrollable Filter Bar */}
+          <div className="bento-filter-bar" role="tablist" aria-label="Tool Categories">
             <button
               type="button"
+              role="tab"
+              aria-selected={activeCategory === 'popular'}
+              className={`bento-filter-btn ${activeCategory === 'popular' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('popular')}
+            >
+              Popular Tools ({popularTools.length})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === 'all'}
               className={`bento-filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
               onClick={() => setActiveCategory('all')}
             >
@@ -156,6 +197,8 @@ export default function Home() {
               <button
                 key={cat.id}
                 type="button"
+                role="tab"
+                aria-selected={activeCategory === cat.id}
                 className={`bento-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
                 onClick={() => setActiveCategory(cat.id)}
               >
@@ -164,14 +207,34 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Clean Utilitarian Tool Grid */}
-          <motion.div layout className="tool-grid">
-            <AnimatePresence>
-              {filteredTools.map((tool, idx) => (
-                <ToolCard key={tool.id} tool={tool} index={idx} />
+          {/* Grouped Category Sections when 'all' is selected vs Focused Grid for Specific Category */}
+          {activeCategory === 'all' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+              {TOOL_CATEGORIES.map((cat) => (
+                <div key={cat.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{cat.label}</h3>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                      ({cat.tools.length} tools)
+                    </span>
+                  </div>
+                  <div className="tool-grid">
+                    {cat.tools.map((tool, idx) => (
+                      <ToolCard key={tool.id} tool={tool} index={idx} />
+                    ))}
+                  </div>
+                </div>
               ))}
-            </AnimatePresence>
-          </motion.div>
+            </div>
+          ) : (
+            <motion.div layout className="tool-grid">
+              <AnimatePresence>
+                {filteredTools.map((tool, idx) => (
+                  <ToolCard key={tool.id} tool={tool} index={idx} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </section>
 
         {/* ========================================================================= */}
@@ -180,7 +243,7 @@ export default function Home() {
         <section className="format-matrix-section">
           <div style={{ textAlign: 'center' }}>
             <span className="section-tagline">Technical Specifications</span>
-            <h2 className="nexacore-section-title">Supported File Formats & Processing Engines</h2>
+            <h2 className="nexacore-section-title">Supported File Formats &amp; Processing Engines</h2>
             <p className="nexacore-section-desc" style={{ margin: '0 auto', maxWidth: 620 }}>
               PdfFlow utilizes optimized binary processing routines for lossless document conversion and restructuring.
             </p>
@@ -190,21 +253,21 @@ export default function Home() {
             <table className="matrix-table">
               <thead>
                 <tr>
-                  <th>Format</th>
-                  <th>Classification</th>
-                  <th>Supported Operations</th>
-                  <th>Underlying Engine</th>
+                  <th style={{ width: '22%' }}>Format</th>
+                  <th style={{ width: '20%' }}>Classification</th>
+                  <th style={{ width: '38%' }}>Supported Operations</th>
+                  <th style={{ width: '20%' }}>Underlying Engine</th>
                 </tr>
               </thead>
               <tbody>
                 {formatMatrix.map((row, idx) => (
                   <tr key={idx}>
                     <td>
-                      <span className="format-pill">{row.format}</span>
+                      <span className="format-label">{row.format}</span>
                     </td>
                     <td style={{ color: 'var(--text-secondary)' }}>{row.type}</td>
-                    <td style={{ fontSize: '13px' }}>{row.operations}</td>
-                    <td style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{row.operations}</td>
+                    <td style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                       {row.engine}
                     </td>
                   </tr>

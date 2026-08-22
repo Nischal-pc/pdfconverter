@@ -142,7 +142,7 @@ export default function Navbar() {
             <Link href="/tools" className="navbar-text-link">PDF Tools</Link>
             <Link href="/tools" className="navbar-text-link">How It Works</Link>
             <Link href="/about" className="navbar-text-link">About Us</Link>
-            <Link href="/history" className="navbar-text-link">My History</Link>
+            <Link href="/history" className="navbar-text-link" title="Stored strictly in your local browser — zero cloud retention">Local History</Link>
 
             <button
               type="button"
@@ -159,17 +159,17 @@ export default function Navbar() {
                 borderRadius: 'var(--radius-sm)',
                 padding: '5px 10px',
                 color: 'var(--text-secondary)',
-                fontSize: 12.5,
+                fontSize: 12,
                 cursor: 'pointer',
               }}
             >
               <SearchIcon />
               <span style={{ fontSize: 12 }}>Search</span>
               <kbd style={{
-                fontSize: 10.5,
+                fontSize: 11,
                 fontFamily: 'JetBrains Mono, monospace',
                 padding: '1px 5px',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-sm)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-muted)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -195,7 +195,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="navbar-auth">
-                <Link href="/signup" className="navbar-btn-cta">Try Free</Link>
+                <Link href="/#tools" className="navbar-btn-cta">Explore Tools</Link>
               </div>
             )}
           </div>
