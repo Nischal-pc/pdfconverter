@@ -749,3 +749,154 @@ exports.webpToPNG = async (req, res) => {
     res.status(500).json({ error: `WebP to PNG failed: ${err.message}` });
   }
 };
+
+// ─── MARKDOWN → PDF ──────────────────────────────────────
+exports.markdownToPDF = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file || !file.buffer) return res.status(400).json({ error: 'No Markdown file uploaded.' });
+
+    const mdText = file.buffer.toString('utf8');
+    const doc = await PDFDocument.create();
+    const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const fontCode = await doc.embedFont(StandardFonts.Courier);
+
+    const margin = 50;
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+    const contentWidth = pageWidth - margin * 2;
+
+    let page = doc.addPage([pageWidth, pageHeight]);
+    let currentY = pageHeight - margin;
+
+    const checkPageBreak = (neededHeight) => {
+      if (currentY - neededHeight < margin) {
+        page = doc.addPage([pageWidth, pageHeight]);
+        currentY = pageHeight - margin;
+      }
+    };
+
+    const lines = mdText.split('\n');
+    let inCodeBlock = false;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trimEnd();
+
+      if (line.startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+
+      if (inCodeBlock) {
+        checkPageBreak(16);
+        page.drawText(line.substring(0, 75), {
+          x: margin + 10,
+          y: currentY - 12,
+          size: 9.5,
+          font: fontCode,
+          color: rgb(0.2, 0.25, 0.3),
+        });
+        currentY -= 15;
+        continue;
+      }
+
+      if (line.startsWith('# ')) {
+        checkPageBreak(36);
+        currentY -= 10;
+        page.drawText(line.replace(/^#\s+/, '').substring(0, 60), {
+          x: margin,
+          y: currentY - 20,
+          size: 20,
+          font: fontBold,
+          color: rgb(0.06, 0.09, 0.14),
+        });
+        currentY -= 28;
+      } else if (line.startsWith('## ')) {
+        checkPageBreak(28);
+        currentY -= 8;
+        page.drawText(line.replace(/^##\s+/, '').substring(0, 70), {
+          x: margin,
+          y: currentY - 16,
+          size: 15,
+          font: fontBold,
+          color: rgb(0.1, 0.15, 0.2),
+        });
+        currentY -= 22;
+      } else if (line.startsWith('### ')) {
+        checkPageBreak(22);
+        page.drawText(line.replace(/^###\s+/, '').substring(0, 80), {
+          x: margin,
+          y: currentY - 13,
+          size: 12.5,
+          font: fontBold,
+          color: rgb(0.15, 0.2, 0.25),
+        });
+        currentY -= 18;
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        checkPageBreak(18);
+        page.drawText(`•  ${line.substring(2)}`.substring(0, 90), {
+          x: margin + 10,
+          y: currentY - 11,
+          size: 10.5,
+          font: fontRegular,
+          color: rgb(0.15, 0.2, 0.25),
+        });
+        currentY -= 16;
+      } else if (!line.trim()) {
+        currentY -= 10;
+      } else {
+        checkPageBreak(18);
+        page.drawText(line.substring(0, 95), {
+          x: margin,
+          y: currentY - 11,
+          size: 10.5,
+          font: fontRegular,
+          color: rgb(0.15, 0.2, 0.25),
+        });
+        currentY -= 16;
+      }
+    }
+
+    const outBytes = await doc.save({ useObjectStreams: true });
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
+
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
+  } catch (err) {
+    res.status(500).json({ error: `Markdown to PDF failed: ${err.message}` });
+  }
+};
+
+// ─── PDF → CSV ───────────────────────────────────────────
+exports.pdfToCSV = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file || !file.buffer) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+    const dataBuffer = file.buffer;
+    const data = await pdfParse(dataBuffer);
+
+    const rawLines = (data.text || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    const csvRows = rawLines.map((line) => {
+      let cells;
+      if (line.includes('\t')) cells = line.split('\t');
+      else if (line.includes('  ')) cells = line.split(/\s{2,}/);
+      else cells = [line];
+
+      return cells.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',');
+    });
+
+    const csvContent = csvRows.join('\n');
+    const { outPath, outName } = await saveBuffer(Buffer.from(csvContent), '.csv');
+
+    res.json({
+      success: true,
+      filename: outName,
+      downloadUrl: outPath,
+      rowCount: csvRows.length,
+      pages: data.numpages,
+    });
+  } catch (err) {
+    res.status(500).json({ error: `PDF to CSV failed: ${err.message}` });
+  }
+};

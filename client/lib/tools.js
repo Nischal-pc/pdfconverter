@@ -63,6 +63,7 @@ export const TOOL_CATEGORIES = [
       { id: 'text-to-pdf', label: 'Text to PDF', desc: 'Convert plain text (.txt) files into clean PDF', icon: <FileText size={24} />, endpoint: '/api/convert/text-to-pdf', accept: { 'text/plain': ['.txt'] } },
       { id: 'ppt-to-pdf', label: 'PPT to PDF', desc: 'Convert PowerPoint to PDF', icon: <Presentation size={24} />, endpoint: '/api/convert/ppt-to-pdf', accept: { 'application/vnd.ms-powerpoint': ['.ppt'], 'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'] } },
       { id: 'excel-to-pdf', label: 'Excel to PDF', desc: 'Convert Excel sheets to PDF', icon: <Table size={24} />, endpoint: '/api/convert/excel-to-pdf', accept: { 'application/vnd.ms-excel': ['.xls'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } },
+      { id: 'markdown-to-pdf', label: 'Markdown to PDF', desc: 'Convert .md notes and docs to formatted PDF', icon: <FileCode size={24} />, endpoint: '/api/convert/markdown-to-pdf', accept: { 'text/markdown': ['.md', '.markdown'], 'text/plain': ['.txt'] } },
     ],
   },
   {
@@ -73,6 +74,7 @@ export const TOOL_CATEGORIES = [
     tools: [
       { id: 'pdf-to-word', label: 'PDF to Word', desc: 'Convert PDF to editable .docx document', icon: <FileText size={24} />, endpoint: '/api/convert/pdf-to-word', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'pdf-to-excel', label: 'PDF to Excel', desc: 'Extract PDF data and tables to .xlsx spreadsheet', icon: <Table size={24} />, endpoint: '/api/convert/pdf-to-excel', accept: { 'application/pdf': ['.pdf'] } },
+      { id: 'pdf-to-csv', label: 'PDF to CSV', desc: 'Export PDF tables and line items to .csv', icon: <Table size={24} />, endpoint: '/api/convert/pdf-to-csv', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'pdf-to-jpg', label: 'PDF to JPG', desc: 'Export PDF pages as high-DPI JPG images', icon: <ImageIcon size={24} />, endpoint: '/api/convert/pdf-to-jpg', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'pdf-to-png', label: 'PDF to PNG', desc: 'Export PDF pages as crisp transparent PNG images', icon: <ImageDown size={24} />, endpoint: '/api/convert/pdf-to-png', accept: { 'application/pdf': ['.pdf'] } },
       { id: 'pdf-to-text', label: 'PDF to Text', desc: 'Extract full text from PDF into .txt', icon: <FileText size={24} />, endpoint: '/api/convert/pdf-to-text', accept: { 'application/pdf': ['.pdf'] } },
@@ -137,6 +139,7 @@ export const TOOL_CATEGORIES = [
     tools: [
       { id: 'ocr', label: 'OCR PDF', desc: 'Extract text from scans (multi-language)', icon: <Eye size={24} />, endpoint: '/api/ai/ocr', accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.tiff'], 'application/pdf': ['.pdf'] } },
       { id: 'summarize', label: 'Summarize PDF', desc: 'AI extractive summarization', icon: <Bot size={24} />, endpoint: '/api/ai/summarize', accept: { 'application/pdf': ['.pdf'] } },
+      { id: 'word-count', label: 'PDF Word Counter', desc: 'Detailed word count, reading time & stats', icon: <Bot size={24} />, endpoint: '/api/pdf/word-count', accept: { 'application/pdf': ['.pdf'] } },
     ],
   },
 ];

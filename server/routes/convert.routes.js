@@ -25,7 +25,8 @@ router.post('/image-to-webp', upload.single('file'), ctrl.imageToWebP);
 router.post('/jpg-to-webp', upload.single('file'), ctrl.imageToWebP);
 router.post('/png-to-webp', upload.single('file'), ctrl.imageToWebP);
 router.post('/webp-to-jpg', upload.single('file'), ctrl.webpToJPG);
-router.post('/webp-to-png', upload.single('file'), ctrl.webpToPNG);
 router.post('/image-to-text', upload.single('file'), ctrl.imageToText);
+router.post('/markdown-to-pdf', upload.single('file'), ctrl.markdownToPDF);
+router.post('/pdf-to-csv', upload.single('file'), ctrl.pdfToCSV);
 
 module.exports = router;

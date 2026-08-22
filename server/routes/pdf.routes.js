@@ -25,6 +25,7 @@ router.post('/edit', upload.single('file'), ctrl.visualEditPDF);
 router.post('/flatten', upload.single('file'), ctrl.flattenPDF);
 router.post('/sanitize', upload.single('file'), ctrl.sanitizePDF);
 router.post('/grayscale', upload.single('file'), ctrl.grayscalePDF);
+router.post('/word-count', upload.single('file'), ctrl.wordCountPDF);
 router.post('/page-count', upload.single('file'), ctrl.getPageCount);
 
 module.exports = router;

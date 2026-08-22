@@ -470,8 +470,30 @@ export default function ToolProcessor({ tool }) {
                 </div>
               )}
 
+              {/* Extras if Word Count tool */}
+              {result.wordCount != null && (
+                <div className="stat-row" style={{ marginBottom: 16 }}>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Words</div>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>{result.wordCount.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Characters</div>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-blue)', fontFamily: 'JetBrains Mono, monospace' }}>{result.charCount.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Read Time</div>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: '#10b981', fontFamily: 'JetBrains Mono, monospace' }}>{result.readingTime}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Avg Words/Pg</div>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>{result.avgWordsPerPage}</div>
+                  </div>
+                </div>
+              )}
+
               {/* Extras if OCR result has charCount + method */}
-              {result.charCount != null && !result.summary && !result.reduction && (
+              {result.charCount != null && !result.summary && !result.reduction && !result.wordCount && (
                 <div className="meta-row" style={{ justifyContent: 'center', gap: 12 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Characters extracted: <strong style={{ color: 'var(--text-secondary)' }}>{result.charCount.toLocaleString()}</strong></span>
                   {result.method && (

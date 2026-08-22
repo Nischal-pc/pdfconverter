@@ -1028,3 +1028,36 @@ exports.grayscalePDF = async (req, res) => {
     res.status(500).json({ error: `Grayscale conversion failed: ${err.message}` });
   }
 };
+
+// ─── PDF WORD & STATS COUNTER ────────────────────────────
+exports.wordCountPDF = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file || !file.buffer) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+    const dataBuffer = file.buffer;
+    const data = await pdfParse(dataBuffer);
+    const text = (data.text || '').trim();
+
+    const words = text ? text.match(/\b[\w'-]+\b/g) || [] : [];
+    const wordCount = words.length;
+    const charCount = text.length;
+    const charNoSpaces = text.replace(/\s+/g, '').length;
+    const pageCount = data.numpages || 1;
+    const readingTimeMin = Math.ceil(wordCount / 200); // Standard 200 WPM
+    const avgWordsPerPage = Math.round(wordCount / pageCount);
+
+    res.json({
+      success: true,
+      wordCount,
+      charCount,
+      charNoSpaces,
+      pageCount,
+      readingTime: `${readingTimeMin} min${readingTimeMin === 1 ? '' : 's'}`,
+      avgWordsPerPage,
+      preview: text.substring(0, 2000),
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Word count failed: ${err.message}` });
+  }
+};
