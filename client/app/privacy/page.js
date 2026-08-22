@@ -38,8 +38,8 @@ export default function PrivacyPage() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 24 }}>
             Have questions or concerns? PdfFlow is self-hostable — you can deploy your own instance and have full control over all data and infrastructure.
           </p>
-          <div style={{ marginTop: 24 }}>
-            <Link href="/" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>← Back to home</Link>
+          <div style={{ marginTop: 32 }}>
+            <Link href="/" className="btn-secondary">← Back to home</Link>
           </div>
         </motion.div>
       </div>

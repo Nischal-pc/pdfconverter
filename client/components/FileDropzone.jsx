@@ -6,7 +6,9 @@ import { UploadCloud, FileText, Image as ImageIcon, Paperclip, X } from 'lucide-
 
 export default function FileDropzone({ accept, multiple = false, onFiles, files = [], onRemove }) {
   const onDrop = useCallback((accepted) => {
-    onFiles(accepted);
+    if (accepted && accepted.length > 0) {
+      onFiles(accepted);
+    }
   }, [onFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -22,51 +24,35 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
   };
 
   const getFileIcon = (file) => {
-    if (file.type?.startsWith('image/')) return <ImageIcon size={18} color="#c084fc" />;
-    if (file.type?.includes('pdf')) return <FileText size={18} color="#38bdf8" />;
-    return <Paperclip size={18} color="#94a3b8" />;
+    if (file.type?.startsWith('image/')) return <ImageIcon size={18} />;
+    if (file.type?.includes('pdf')) return <FileText size={18} />;
+    return <Paperclip size={18} />;
   };
 
   return (
     <div style={{ width: '100%' }}>
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
+      <div {...getRootProps()} className={`dropzone-container ${isDragActive ? 'is-active' : ''}`}>
         <input {...getInputProps()} />
-        <motion.div
-          animate={{ scale: isDragActive ? 1.03 : 1 }}
-          transition={{ duration: 0.2 }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-        >
-          {/* Realistic glassmorphic upload glyph */}
-          <div style={{
-            width: 72,
-            height: 72,
-            borderRadius: 20,
-            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(56, 189, 248, 0.1))',
-            border: '1px solid rgba(56, 189, 248, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 20,
-            boxShadow: '0 12px 30px rgba(37, 99, 235, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
-          }}>
-            <UploadCloud size={34} color="#38bdf8" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="dropzone-icon">
+            <UploadCloud size={24} />
           </div>
 
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.01em' }}>
+          <div className="dropzone-title">
             {isDragActive ? 'Drop files to upload instantly' : 'Drag & drop files here'}
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.5 }}>
-            or click below to browse from your computer
+          <div className="dropzone-subtitle" style={{ marginBottom: 20 }}>
+            or click to browse from your device
           </div>
           <button
             className="btn-primary"
             type="button"
             onClick={(e) => e.stopPropagation()}
-            style={{ pointerEvents: 'none', padding: '12px 28px', fontSize: 14.5 }}
+            style={{ pointerEvents: 'none' }}
           >
             <span>Choose {multiple ? 'Files' : 'File'}</span>
           </button>
-        </motion.div>
+        </div>
       </div>
 
       {/* File List */}
@@ -76,45 +62,44 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}
+            style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}
           >
             {files.map((file, idx) => (
               <motion.div
                 key={`${file.name}-${idx}`}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: idx * 0.04 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, delay: idx * 0.03 }}
                 className="file-item"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(16, 15, 32, 0.85) 0%, rgba(8, 7, 18, 0.95) 100%)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: 14,
-                  padding: '12px 16px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '10px 14px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 14,
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
+                  gap: 12,
                 }}
               >
                 <div style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 'var(--radius-sm)',
                   flexShrink: 0,
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  color: 'var(--text-primary)'
                 }}>
                   {getFileIcon(file)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {file.name}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
                     {formatSize(file.size)}
                   </div>
                 </div>
@@ -124,30 +109,20 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
                     onClick={() => onRemove(idx)}
                     aria-label={`Remove ${file.name}`}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'transparent',
+                      border: '1px solid var(--border)',
                       cursor: 'pointer',
                       color: 'var(--text-muted)',
                       width: 28,
                       height: 28,
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius-sm)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#ef4444';
-                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'var(--text-muted)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    <X size={15} />
+                    <X size={14} />
                   </button>
                 )}
               </motion.div>
@@ -158,4 +133,3 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
     </div>
   );
 }
-

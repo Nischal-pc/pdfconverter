@@ -461,7 +461,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             className={`editor-tool-btn ${activeTool === 'text' ? 'active' : ''}`}
             onClick={() => {
               setActiveTool('text');
-              toast('Click anywhere on the PDF page to type text', { icon: '📝' });
+              toast('Click anywhere on the PDF page to type text');
             }}
           >
             <Type size={16} />
@@ -473,7 +473,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             className={`editor-tool-btn ${activeTool === 'date' ? 'active' : ''}`}
             onClick={() => {
               setActiveTool('date');
-              toast('Click on the page to place a date stamp', { icon: '📅' });
+              toast('Click on the page to place a date stamp');
             }}
           >
             <Calendar size={16} />
@@ -485,7 +485,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             className={`editor-tool-btn ${activeTool === 'check' ? 'active' : ''}`}
             onClick={() => {
               setActiveTool('check');
-              toast('Click on the page to place a checkmark', { icon: '✔️' });
+              toast('Click on the page to place a checkmark');
             }}
           >
             <Check size={16} />

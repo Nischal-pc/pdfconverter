@@ -224,74 +224,35 @@ export default function HistoryPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="history-item-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="history-item-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {item.downloadUrl && !expired && (
                           <>
-                            <a
-                              href={`${getApiBase()}/uploads/${item.downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => triggerFileDownload(item.downloadUrl, item.outputFile)}
                               className="btn-primary"
-                              style={{
-                                padding: '8px 14px',
-                                fontSize: 13,
-                                textDecoration: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                cursor: 'pointer',
-                              }}
+                              style={{ padding: '6px 12px', fontSize: 12.5 }}
                             >
-                              <Eye size={14} />
-                              <span>View in Browser</span>
-                            </a>
-                            <a
-                              href={`${getApiBase()}/uploads/${item.downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}`}
-                              download={item.outputFile || 'Processed-Document.pdf'}
-                              className="btn-secondary"
-                              style={{
-                                padding: '8px 14px',
-                                fontSize: 13,
-                                borderColor: 'rgba(99, 102, 241, 0.3)',
-                                color: 'var(--accent)',
-                                textDecoration: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <Download size={14} />
+                              <Download size={13} />
                               <span>Download</span>
-                            </a>
+                            </button>
                           </>
                         )}
                         {expired && tool && (
                           <Link href={`/tools/${item.toolId}`} style={{ textDecoration: 'none' }}>
-                            <button
-                              type="button"
-                              className="btn-secondary"
-                              style={{ padding: '8px 14px', fontSize: 12, color: 'var(--text-muted)' }}
-                            >
+                            <span className="btn-secondary" style={{ padding: '6px 12px', fontSize: 12.5 }}>
                               Re-process →
-                            </button>
+                            </span>
                           </Link>
                         )}
                         <button
                           type="button"
                           onClick={() => handleDelete(item.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--text-muted)',
-                            fontSize: 20,
-                            padding: '6px 10px',
-                            borderRadius: 8,
-                          }}
-                          title="Delete from history"
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: 12.5, color: '#ef4444' }}
+                          title="Remove item"
                         >
-                          ×
+                          Delete
                         </button>
                       </div>
                     </motion.div>

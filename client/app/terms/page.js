@@ -39,8 +39,8 @@ export default function TermsPage() {
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15 }}>{s.body}</p>
             </section>
           ))}
-          <div style={{ marginTop: 24 }}>
-            <Link href="/" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>← Back to home</Link>
+          <div style={{ marginTop: 32 }}>
+            <Link href="/" className="btn-secondary">← Back to home</Link>
           </div>
         </motion.div>
       </div>
