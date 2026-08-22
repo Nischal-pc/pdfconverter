@@ -1,0 +1,12 @@
+{
+  "name": "pdfflow",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm run start:api\" \"npm run start:web\"",
+    "start:api": "node server/index.js",
+    "start:web": "npm run dev --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "pdf-tools-server",
+  "version": "1.0.0",
+  "description": "PDF Tools API Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compromise": "^14.10.0",
+    "cors": "^2.8.5",
+    "docx": "^8.5.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "fontkit": "^2.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.1",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "mupdf": "^1.28.0",
+    "node-cron": "^3.0.3",
+    "pdf-img-convert": "^2.0.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.33.1",
+    "tesseract.js": "^5.0.3",
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

@@ -1,0 +1,31 @@
+const express = require('express');
+const router = express.Router();
+const upload = require('../middleware/upload.middleware');
+const ctrl = require('../controllers/convert.controller');
+
+router.post('/jpg-to-pdf', upload.array('files', 20), ctrl.imageToPDF);
+router.post('/png-to-pdf', upload.array('files', 20), ctrl.imageToPDF);
+router.post('/image-to-pdf', upload.array('files', 20), ctrl.imageToPDF);
+router.post('/word-to-pdf', upload.single('file'), ctrl.wordToPDF);
+router.post('/word-to-text', upload.single('file'), ctrl.wordToText);
+router.post('/word-to-html', upload.single('file'), ctrl.wordToHTML);
+router.post('/text-to-word', upload.single('file'), ctrl.textToWord);
+router.post('/text-to-pdf', upload.single('file'), ctrl.textToPDF);
+router.post('/ppt-to-pdf', upload.single('file'), ctrl.pptToPDF);
+router.post('/excel-to-pdf', upload.single('file'), ctrl.excelToPDF);
+router.post('/pdf-to-excel', upload.single('file'), ctrl.pdfToExcel);
+router.post('/pdf-to-jpg', upload.single('file'), ctrl.pdfToJPG);
+router.post('/pdf-to-png', upload.single('file'), ctrl.pdfToPNG);
+router.post('/pdf-to-text', upload.single('file'), ctrl.pdfToText);
+router.post('/pdf-to-word', upload.single('file'), ctrl.pdfToWord);
+router.post('/pdf-to-html', upload.single('file'), ctrl.pdfToHTML);
+router.post('/jpg-to-png', upload.single('file'), ctrl.jpgToPNG);
+router.post('/png-to-jpg', upload.single('file'), ctrl.pngToJPG);
+router.post('/image-to-webp', upload.single('file'), ctrl.imageToWebP);
+router.post('/jpg-to-webp', upload.single('file'), ctrl.imageToWebP);
+router.post('/png-to-webp', upload.single('file'), ctrl.imageToWebP);
+router.post('/webp-to-jpg', upload.single('file'), ctrl.webpToJPG);
+router.post('/webp-to-png', upload.single('file'), ctrl.webpToPNG);
+router.post('/image-to-text', upload.single('file'), ctrl.imageToText);
+
+module.exports = router;
