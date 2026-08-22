@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload.middleware');
+const { validateFileSignatures } = require('../middleware/security.middleware');
 const ctrl = require('../controllers/convert.controller');
+
+router.use(validateFileSignatures);
 
 router.post('/jpg-to-pdf', upload.array('files', 20), ctrl.imageToPDF);
 router.post('/png-to-pdf', upload.array('files', 20), ctrl.imageToPDF);

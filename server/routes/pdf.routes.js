@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload.middleware');
+const { validateFileSignatures } = require('../middleware/security.middleware');
 const ctrl = require('../controllers/pdf.controller');
+
+router.use(validateFileSignatures);
 
 router.post('/merge', upload.array('files', 20), ctrl.mergePDF);
 router.post('/split', upload.single('file'), ctrl.splitPDF);

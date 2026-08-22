@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const { authLimiter } = require('../middleware/security.middleware');
 
 // Lazy load User model (only works when mongoose is connected)
 const getUser = () => {
@@ -18,8 +19,8 @@ const signToken = (id) => {
   });
 };
 
-// POST /api/auth/register
-router.post('/register', async (req, res) => {
+// POST /api/auth/register (Rate-limited: 10/15min)
+router.post('/register', authLimiter, async (req, res) => {
   try {
     if (!mongoose.connection.readyState) {
       return res.status(503).json({ error: 'Database not connected. Auth unavailable.' });
@@ -49,8 +50,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
+// POST /api/auth/login (Rate-limited: 10/15min)
+router.post('/login', authLimiter, async (req, res) => {
   try {
     if (!mongoose.connection.readyState) {
       return res.status(503).json({ error: 'Database not connected. Auth unavailable.' });

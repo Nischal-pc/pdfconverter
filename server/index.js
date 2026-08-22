@@ -47,7 +47,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(uploadsDir));
 
-// Routes
+const { apiLimiter } = require('./middleware/security.middleware');
+
+// Routes (Protected with global volume limiter)
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/convert', convertRoutes);
