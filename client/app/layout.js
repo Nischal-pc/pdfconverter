@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ServerStatus from '@/components/ServerStatus';
+import CommandPalette from '@/components/CommandPalette';
 import { APP_NAME, APP_DESCRIPTION } from '@/lib/brand';
 
 export const metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <Navbar />
+          <CommandPalette />
           <ServerStatus />
           <main className="site-main">{children}</main>
           <Footer />

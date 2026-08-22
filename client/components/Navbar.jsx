@@ -144,9 +144,39 @@ export default function Navbar() {
             <Link href="/about" className="navbar-text-link">About Us</Link>
             <Link href="/history" className="navbar-text-link">My History</Link>
 
-            <Link href="/tools" className="navbar-icon-btn" title="Search tools" aria-label="Search tools">
+            <button
+              type="button"
+              className="navbar-search-trigger"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+              title="Quick Search (Ctrl + K)"
+              aria-label="Quick Search"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'var(--border)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '5px 10px',
+                color: 'var(--text-secondary)',
+                fontSize: 12.5,
+                cursor: 'pointer',
+              }}
+            >
               <SearchIcon />
-            </Link>
+              <span style={{ fontSize: 12 }}>Search</span>
+              <kbd style={{
+                fontSize: 10.5,
+                fontFamily: 'JetBrains Mono, monospace',
+                padding: '1px 5px',
+                borderRadius: 4,
+                background: 'var(--bg-card)',
+                color: 'var(--text-muted)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}>
+                ⌘K
+              </kbd>
+            </button>
 
             <button
               type="button"
@@ -173,6 +203,15 @@ export default function Navbar() {
 
 
           <div className="navbar-mobile-controls">
+            <button
+              type="button"
+              className="navbar-icon-btn"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+              title="Search tools"
+              aria-label="Search tools"
+            >
+              <SearchIcon />
+            </button>
             <button
               type="button"
               className="navbar-theme-btn"
