@@ -22,7 +22,7 @@ exports.ocr = async (req, res) => {
     if (isPdf) {
       // For PDF files: first attempt digital text extraction
       try {
-        const dataBuffer = fs.readFileSync(file.path);
+        const dataBuffer = file.buffer;
         const data = await pdfParse(dataBuffer);
         const extracted = (data.text || '').trim();
 
@@ -33,7 +33,7 @@ exports.ocr = async (req, res) => {
         } else {
           // Scanned or image-only PDF — attempt Tesseract on the file
           try {
-            const result = await Tesseract.recognize(file.path, lang, {
+            const result = await Tesseract.recognize(file.buffer, lang, {
               logger: () => {},
             });
             text = result.data.text || '';
@@ -47,35 +47,37 @@ exports.ocr = async (req, res) => {
       } catch (parseErr) {
         // pdf-parse failed, try Tesseract directly
         try {
-          const result = await Tesseract.recognize(file.path, lang, {
+          const result = await Tesseract.recognize(file.buffer, lang, {
             logger: () => {},
           });
           text = result.data.text || '';
           method = 'ocr';
         } catch (tessErr) {
-          fs.existsSync(file.path) && fs.unlinkSync(file.path);
+          
           return res.status(500).json({ error: `OCR failed: ${tessErr.message}` });
         }
       }
     } else {
       // Standard image — use Tesseract directly
-      const result = await Tesseract.recognize(file.path, lang, {
+      const result = await Tesseract.recognize(file.buffer, lang, {
         logger: () => {},
       });
       text = result.data.text || '';
       method = 'ocr';
     }
 
+    const { put } = require('@vercel/blob');
     const outName = `${uuidv4()}-ocr.txt`;
-    const outPath = path.join(uploadsDir, outName);
-    fs.writeFileSync(outPath, text);
+    const blob = await put(`uploads/${outName}`, text, {
+      access: 'public',
+      contentType: 'text/plain; charset=utf-8'
+    });
 
-    fs.existsSync(file.path) && fs.unlinkSync(file.path);
     res.json({
       success: true,
       text,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: blob.url,
       charCount: text.length,
       method,
     });
@@ -93,7 +95,7 @@ exports.summarize = async (req, res) => {
     const maxSentences = parseInt(req.body.maxSentences || '5');
 
     // Extract text from PDF
-    const dataBuffer = fs.readFileSync(file.path);
+    const dataBuffer = file.buffer;
     const data = await pdfParse(dataBuffer);
     const rawText = data.text;
 

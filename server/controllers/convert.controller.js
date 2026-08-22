@@ -28,9 +28,10 @@ const safeUnlink = (filePath) => {
   }
 };
 
+const { put } = require('@vercel/blob');
+
 const saveBuffer = async (buffer, ext = '.pdf') => {
   const outName = `${uuidv4()}-output${ext}`;
-  const outPath = path.join(uploadsDir, outName);
   let finalBuf = Buffer.from(buffer);
   if (ext === '.pdf') {
     try {
@@ -39,8 +40,12 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
       console.warn('PDF normalization fallback:', normErr.message);
     }
   }
-  fs.writeFileSync(outPath, finalBuf);
-  return { outPath, outName };
+  
+  const blob = await put(`uploads/${outName}`, finalBuf, {
+    access: 'public',
+  });
+  
+  return { outPath: blob.url, outName };
 };
 
 // ─── JPG/IMAGE → PDF ─────────────────────────────────────
@@ -65,7 +70,7 @@ exports.imageToPDF = async (req, res) => {
       if (['.webp', '.gif', '.bmp', '.tiff', '.tif'].includes(ext)) {
         imageBytes = await sharp(file.path).jpeg().toBuffer();
       } else {
-        imageBytes = fs.readFileSync(file.path);
+        imageBytes = file.buffer;
       }
 
       const mimeType = file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
@@ -97,12 +102,12 @@ exports.imageToPDF = async (req, res) => {
 
       const page = doc.addPage([pageW, pageH]);
       page.drawImage(embedded, { x: drawX, y: drawY, width: drawW, height: drawH });
-      safeUnlink(file.path);
+      
     }
 
     const outBytes = await doc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -129,11 +134,11 @@ const officeToPDF = async (file, res) => {
     const outName = `${uuidv4()}-converted.pdf`;
     const outPath = path.join(uploadsDir, outName);
     fs.renameSync(expectedOutput, outPath);
-    safeUnlink(file.path);
+    
 
-    return res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    return res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
-    safeUnlink(file.path);
+    
     return res.status(500).json({
       error: `LibreOffice conversion failed: ${err.message}. Make sure LibreOffice is installed.`,
     });
@@ -167,13 +172,13 @@ exports.pdfToJPG = async (req, res) => {
     const dpi = parseInt(req.body.dpi || '150');
     const scale = Math.max(0.5, Math.min(4, dpi / 72)); // Scale factor relative to 72dpi
 
-    const fileBuffer = fs.readFileSync(file.path);
+    const fileBuffer = file.buffer;
     const mupdf = await import('mupdf');
     const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
     const pageCount = doc.countPages();
 
     if (pageCount === 0) {
-      safeUnlink(file.path);
+      
       return res.status(400).json({ error: 'The PDF contains no pages.' });
     }
 
@@ -188,10 +193,10 @@ exports.pdfToJPG = async (req, res) => {
       const outName = `${baseId}-page-${pageNumber}.jpg`;
       const outPath = path.join(uploadsDir, outName);
       fs.writeFileSync(outPath, jpegBuffer);
-      generatedFiles.push({ filename: outName, downloadUrl: `/uploads/${outName}` });
+      generatedFiles.push({ filename: outName, downloadUrl: outPath });
     }
 
-    safeUnlink(file.path);
+    
 
     return res.json({
       success: true,
@@ -211,18 +216,18 @@ exports.pdfToText = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
-    const dataBuffer = fs.readFileSync(file.path);
+    const dataBuffer = file.buffer;
     const data = await pdfParse(dataBuffer);
 
     const outName = `${uuidv4()}-output.txt`;
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, data.text);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       text: data.text.substring(0, 2000), // Preview
       pages: data.numpages,
     });
@@ -237,7 +242,7 @@ exports.pdfToWord = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
-    const dataBuffer = fs.readFileSync(file.path);
+    const dataBuffer = file.buffer;
     const data = await pdfParse(dataBuffer);
 
     // Create a basic .docx from extracted text
@@ -254,8 +259,8 @@ exports.pdfToWord = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, docBuffer);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -286,11 +291,11 @@ exports.wordToText = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, extractedText || 'No text found in Word document.');
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       text: (extractedText || '').substring(0, 2000),
     });
   } catch (err) {
@@ -329,11 +334,11 @@ ${result.value}
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, fullHtml);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       htmlPreview: result.value.substring(0, 3000),
     });
   } catch (err) {
@@ -353,8 +358,8 @@ exports.jpgToPNG = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, pngBuffer);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `JPG to PNG conversion failed: ${err.message}` });
@@ -373,8 +378,8 @@ exports.pngToJPG = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, jpgBuffer);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `PNG to JPG conversion failed: ${err.message}` });
@@ -393,8 +398,8 @@ exports.imageToWebP = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, webpBuffer);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `Image to WebP conversion failed: ${err.message}` });
@@ -414,11 +419,11 @@ exports.imageToText = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, text || 'No text recognized in the image.');
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       text: (text || '').substring(0, 3000),
     });
   } catch (err) {
@@ -433,7 +438,7 @@ exports.pdfToExcel = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
-    const dataBuffer = fs.readFileSync(file.path);
+    const dataBuffer = file.buffer;
     const data = await pdfParse(dataBuffer);
     const XLSX = require('xlsx');
 
@@ -453,11 +458,11 @@ exports.pdfToExcel = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     XLSX.writeFile(wb, outPath);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       rowCount: rows.length,
       pages: data.numpages,
     });
@@ -528,8 +533,8 @@ exports.textToPDF = async (req, res) => {
     const outBytes = await doc.save();
     const { outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `Text to PDF conversion failed: ${err.message}` });
@@ -557,8 +562,8 @@ exports.textToWord = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, docBuffer);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `Text to Word conversion failed: ${err.message}` });
@@ -571,7 +576,7 @@ exports.pdfToHTML = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
-    const dataBuffer = fs.readFileSync(file.path);
+    const dataBuffer = file.buffer;
     const data = await pdfParse(dataBuffer);
 
     const paragraphs = data.text
@@ -598,11 +603,11 @@ exports.pdfToHTML = async (req, res) => {
     const outPath = path.join(uploadsDir, outName);
     fs.writeFileSync(outPath, htmlContent);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       htmlPreview: htmlContent.substring(0, 3000),
       pages: data.numpages,
     });
@@ -618,13 +623,13 @@ exports.pdfToPNG = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
-    const fileBuffer = fs.readFileSync(file.path);
+    const fileBuffer = file.buffer;
     const mupdf = await import('mupdf');
     const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
     const pageCount = doc.countPages();
 
     if (pageCount === 0) {
-      safeUnlink(file.path);
+      
       return res.status(400).json({ error: 'The PDF contains no pages.' });
     }
 
@@ -639,10 +644,10 @@ exports.pdfToPNG = async (req, res) => {
       const outName = `${baseId}-page-${pageNumber}.png`;
       const outPath = path.join(uploadsDir, outName);
       fs.writeFileSync(outPath, pngBuffer);
-      generatedFiles.push({ filename: outName, downloadUrl: `/uploads/${outName}` });
+      generatedFiles.push({ filename: outName, downloadUrl: outPath });
     }
 
-    safeUnlink(file.path);
+    
     return res.json({
       success: true,
       files: generatedFiles,
@@ -663,8 +668,8 @@ exports.webpToJPG = async (req, res) => {
     const buffer = await sharp(file.path).flatten({ background: '#ffffff' }).jpeg({ quality: 92 }).toBuffer();
     const outName = `${uuidv4()}-output.jpg`;
     fs.writeFileSync(path.join(uploadsDir, outName), buffer);
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `WebP to JPG failed: ${err.message}` });
@@ -679,8 +684,8 @@ exports.webpToPNG = async (req, res) => {
     const buffer = await sharp(file.path).png().toBuffer();
     const outName = `${uuidv4()}-output.png`;
     fs.writeFileSync(path.join(uploadsDir, outName), buffer);
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     safeUnlink(req.file?.path);
     res.status(500).json({ error: `WebP to PNG failed: ${err.message}` });

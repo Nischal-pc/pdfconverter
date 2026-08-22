@@ -34,9 +34,10 @@ const sendFile = (res, filePath, downloadName) => {
   });
 };
 
+const { put } = require('@vercel/blob');
+
 const saveBuffer = async (buffer, ext = '.pdf') => {
   const outName = `${uuidv4()}-output${ext}`;
-  const outPath = path.join(uploadsDir, outName);
   let finalBuf = Buffer.from(buffer);
   if (ext === '.pdf') {
     try {
@@ -45,8 +46,12 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
       console.warn('PDF normalization fallback:', normErr.message);
     }
   }
-  fs.writeFileSync(outPath, finalBuf);
-  return { outPath, outName };
+  
+  const blob = await put(`uploads/${outName}`, finalBuf, {
+    access: 'public',
+  });
+  
+  return { outPath: blob.url, outName };
 };
 
 // ─── MERGE ───────────────────────────────────────────────
@@ -68,7 +73,7 @@ exports.mergePDF = async (req, res) => {
     merged.setProducer('PdfFlow — pdf-lib');
 
     for (const file of files) {
-      const bytes = fs.readFileSync(file.path);
+      const bytes = file.buffer;
       const doc = await PDFDocument.load(bytes);
       const pages = await merged.copyPages(doc, doc.getPageIndices());
       pages.forEach((p) => merged.addPage(p));
@@ -80,7 +85,7 @@ exports.mergePDF = async (req, res) => {
     // Cleanup input files
     files.forEach((f) => fs.existsSync(f.path) && fs.unlinkSync(f.path));
 
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -93,7 +98,7 @@ exports.splitPDF = async (req, res) => {
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
     const { ranges } = req.body; // e.g. "1-3,4-6" or empty for split every page
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const totalPages = doc.getPageCount();
 
@@ -123,10 +128,10 @@ exports.splitPDF = async (req, res) => {
       copied.forEach((p) => newDoc.addPage(p));
       const outBytes = await newDoc.save();
       const { outPath, outName } = await saveBuffer(outBytes, `.pdf`);
-      outputFiles.push({ filename: outName, downloadUrl: `/uploads/${outName}`, pages: `${start + 1}-${end + 1}` });
+      outputFiles.push({ filename: outName, downloadUrl: outPath, pages: `${start + 1}-${end + 1}` });
     }
 
-    safeUnlink(file.path);
+    
     res.json({ success: true, files: outputFiles });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -142,7 +147,7 @@ exports.removePages = async (req, res) => {
     const { pages } = req.body; // e.g. "1,3,5-7" — supports ranges
     if (!pages) return res.status(400).json({ error: 'No pages specified to remove.' });
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const totalPages = doc.getPageCount();
 
@@ -155,7 +160,7 @@ exports.removePages = async (req, res) => {
     }
 
     if (keepIndices.length === 0) {
-      safeUnlink(file.path);
+      
       return res.status(400).json({ error: 'Cannot remove all pages from a PDF.' });
     }
 
@@ -166,11 +171,11 @@ exports.removePages = async (req, res) => {
     const outBytes = await newDoc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       pagesRemoved: pagesToRemove.size,
       pagesRemaining: keepIndices.length,
     });
@@ -188,7 +193,7 @@ exports.extractPages = async (req, res) => {
     const { pages } = req.body; // e.g. "1,3,5-7"
     if (!pages) return res.status(400).json({ error: 'No pages specified.' });
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const totalPages = doc.getPageCount();
 
@@ -211,8 +216,8 @@ exports.extractPages = async (req, res) => {
     const outBytes = await newDoc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -228,7 +233,7 @@ exports.organizePDF = async (req, res) => {
     if (!order) return res.status(400).json({ error: 'No page order specified.' });
 
     const newOrder = order.split(',').map((p) => parseInt(p.trim()) - 1);
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
 
     const newDoc = await PDFDocument.create();
@@ -238,8 +243,8 @@ exports.organizePDF = async (req, res) => {
     const outBytes = await newDoc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -273,7 +278,7 @@ exports.compressPDF = async (req, res) => {
     } catch (gsErr) {
       // Ghostscript not available — fallback: re-save with pdf-lib (minimal compression)
       console.warn('Ghostscript unavailable, using pdf-lib fallback:', gsErr.message);
-      const bytes = fs.readFileSync(file.path);
+      const bytes = file.buffer;
       const doc = await PDFDocument.load(bytes);
       const outBytes = await doc.save({ useObjectStreams: true });
       fs.writeFileSync(outPath, outBytes);
@@ -283,11 +288,11 @@ exports.compressPDF = async (req, res) => {
     const compressedSize = fs.statSync(outPath).size;
     const reduction = (((originalSize - compressedSize) / originalSize) * 100).toFixed(1);
 
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       originalSize,
       compressedSize,
       reduction: `${reduction}%`,
@@ -303,13 +308,13 @@ exports.repairPDF = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const outBytes = await doc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: `Could not repair PDF: ${err.message}` });
   }
@@ -325,7 +330,7 @@ exports.rotatePDF = async (req, res) => {
     const pages = req.body.pages;
     const pageScope = req.body.pageScope || 'all';
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const totalPages = doc.getPageCount();
 
@@ -343,8 +348,8 @@ exports.rotatePDF = async (req, res) => {
     const outBytes = await doc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -363,7 +368,7 @@ exports.addWatermark = async (req, res) => {
     const tileMode = req.body.tileMode === 'true';
     const pageScope = req.body.pageScope || 'all';
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const font = await doc.embedFont(StandardFonts.HelveticaBold);
     const total = doc.getPageCount();
@@ -404,8 +409,8 @@ exports.addWatermark = async (req, res) => {
     const outBytes = await doc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -424,7 +429,7 @@ exports.addPageNumbers = async (req, res) => {
     const prefix = req.body.prefix || '';
     const suffix = req.body.suffix || '';
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const pages = doc.getPages();
@@ -451,8 +456,8 @@ exports.addPageNumbers = async (req, res) => {
     const outBytes = await doc.save();
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -467,7 +472,7 @@ exports.protectPDF = async (req, res) => {
     const { userPassword, ownerPassword } = req.body;
     if (!userPassword) return res.status(400).json({ error: 'User password is required.' });
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
 
     const outBytes = await doc.save({
@@ -486,8 +491,8 @@ exports.protectPDF = async (req, res) => {
 
     const { outPath, outName } = await saveBuffer(outBytes);
 
-    safeUnlink(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -549,7 +554,7 @@ exports.addTextToPDF = async (req, res) => {
       italic: StandardFonts.TimesRomanItalic,
     };
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const font = await doc.embedFont(fontMap[fontKey] || StandardFonts.Helvetica);
     const total = doc.getPageCount();
@@ -571,11 +576,11 @@ exports.addTextToPDF = async (req, res) => {
 
     const outBytes = await doc.save();
     const { outName } = await saveBuffer(outBytes);
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       pagesModified: indices.length,
       totalPages: total,
     });
@@ -603,7 +608,7 @@ exports.signPDF = async (req, res) => {
     const reason = req.body.reason || '';
     const dateLabel = req.body.dateLabel || new Date().toLocaleDateString();
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const total = doc.getPageCount();
     const indices = resolvePageScope(pageScope, req.body.page, total);
@@ -662,7 +667,7 @@ exports.signPDF = async (req, res) => {
         stampExtras(page, x, y);
       });
 
-      fs.existsSync(sigFile.path) && fs.unlinkSync(sigFile.path);
+      
     } else {
       const signatureText = req.body.signatureText || 'Signed';
       const fontSize = parseInt(req.body.fontSize || '28', 10);
@@ -704,11 +709,11 @@ exports.signPDF = async (req, res) => {
 
     const outBytes = await doc.save({ useObjectStreams: false });
     const { outName } = await saveBuffer(outBytes);
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       pagesSigned: indices.length,
       totalPages: total,
       signedAllPages: indices.length === total,
@@ -735,7 +740,7 @@ exports.visualEditPDF = async (req, res) => {
       }
     }
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const totalPages = doc.getPageCount();
 
@@ -820,12 +825,12 @@ exports.visualEditPDF = async (req, res) => {
 
     const outBytes = await doc.save({ useObjectStreams: false });
     const { outName } = await saveBuffer(outBytes);
-    safeUnlink(file.path);
+    
 
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       pagesModified: modifiedPages.size || 1,
       totalPages,
     });
@@ -848,7 +853,7 @@ exports.highlightPDF = async (req, res) => {
     const opacity = parseFloat(req.body.opacity || '0.35');
     const borderRadius = parseFloat(req.body.borderRadius || '0');
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes);
     const total = doc.getPageCount();
     const indices = resolvePageScope(req.body.pageScope || 'all', req.body.page, total);
@@ -866,11 +871,11 @@ exports.highlightPDF = async (req, res) => {
 
     const outBytes = await doc.save();
     const { outName } = await saveBuffer(outBytes);
-    safeUnlink(file.path);
+    
     res.json({
       success: true,
       filename: outName,
-      downloadUrl: `/uploads/${outName}`,
+      downloadUrl: outPath,
       pagesModified: indices.length,
       totalPages: total,
     });
@@ -884,10 +889,10 @@ exports.getPageCount = async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
     const count = doc.getPageCount();
-    safeUnlink(file.path);
+    
     res.json({ success: true, pageCount: count });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -902,7 +907,7 @@ exports.unlockPDF = async (req, res) => {
 
     const { password } = req.body;
 
-    const bytes = fs.readFileSync(file.path);
+    const bytes = file.buffer;
     const doc = await PDFDocument.load(bytes, {
       password: password || '',
       ignoreEncryption: !password,
@@ -912,7 +917,7 @@ exports.unlockPDF = async (req, res) => {
     const { outPath, outName } = saveBuffer(outBytes);
 
     fs.existsSync(file.path) && fs.unlinkSync(file.path);
-    res.json({ success: true, filename: outName, downloadUrl: `/uploads/${outName}` });
+    res.json({ success: true, filename: outName, downloadUrl: outPath });
   } catch (err) {
     res.status(500).json({ error: `Could not unlock PDF. Wrong password? ${err.message}` });
   }

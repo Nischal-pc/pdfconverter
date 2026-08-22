@@ -8,6 +8,7 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "^2.4.3",
     "compromise": "^14.10.0",
     "cors": "^2.8.5",
