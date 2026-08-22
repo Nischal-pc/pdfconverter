@@ -23,7 +23,7 @@ function dataUrlToBlob(dataUrl) {
 }
 
 /**
- * Triggers a direct, reliable download in Chrome memory.
+ * Triggers a direct, reliable download across iOS Safari, Chrome on Mac/Windows/Android.
  */
 export function triggerFileDownload(downloadUrl, filename = 'Document.pdf') {
   if (typeof window === 'undefined' || !downloadUrl) return;
@@ -52,11 +52,20 @@ export function triggerFileDownload(downloadUrl, filename = 'Document.pdf') {
   }
   cleanName = cleanName.replace(/[\\/:*?"<>|]/g, '_');
 
+  const isIOS = typeof navigator !== 'undefined' && (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = finalUrl;
   a.setAttribute('download', cleanName);
   a.download = cleanName;
+  if (isIOS) {
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  }
   document.body.appendChild(a);
   a.click();
 
@@ -67,7 +76,7 @@ export function triggerFileDownload(downloadUrl, filename = 'Document.pdf') {
     if (isCreatedBlob) {
       URL.revokeObjectURL(finalUrl);
     }
-  }, 10000);
+  }, 15000);
 }
 
 /**

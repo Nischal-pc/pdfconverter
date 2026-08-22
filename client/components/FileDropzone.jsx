@@ -5,9 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, Image as ImageIcon, Paperclip, X } from 'lucide-react';
 
 export default function FileDropzone({ accept, multiple = false, onFiles, files = [], onRemove }) {
-  const onDrop = useCallback((accepted) => {
-    if (accepted && accepted.length > 0) {
-      onFiles(accepted);
+  const onDrop = useCallback((accepted, fileRejections) => {
+    let finalFiles = accepted ? [...accepted] : [];
+
+    // Fallback for iOS Safari / macOS Chrome where Apple UTI or empty MIME causes react-dropzone rejection
+    if (fileRejections && fileRejections.length > 0) {
+      fileRejections.forEach(({ file }) => {
+        if (file && !finalFiles.some((f) => f.name === file.name && f.size === file.size)) {
+          finalFiles.push(file);
+        }
+      });
+    }
+
+    if (finalFiles.length > 0) {
+      onFiles(finalFiles);
     }
   }, [onFiles]);
 
@@ -52,6 +63,7 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
     onDrop,
     accept,
     multiple,
+    useFsAccessApi: false, // Prevents File System Access API freezes on iOS & Mac Chrome
   });
 
   const formatSize = (bytes) => {
