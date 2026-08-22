@@ -600,7 +600,7 @@ exports.addTextToPDF = async (req, res) => {
     });
 
     const outBytes = await doc.save();
-    const { outName } = await saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes);
     
     res.json({
       success: true,
@@ -733,7 +733,7 @@ exports.signPDF = async (req, res) => {
     }
 
     const outBytes = await doc.save({ useObjectStreams: false });
-    const { outName } = await saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes);
     
     res.json({
       success: true,
@@ -849,7 +849,7 @@ exports.visualEditPDF = async (req, res) => {
     }
 
     const outBytes = await doc.save({ useObjectStreams: false });
-    const { outName } = await saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes);
     
 
     res.json({
@@ -895,7 +895,7 @@ exports.highlightPDF = async (req, res) => {
     });
 
     const outBytes = await doc.save();
-    const { outName } = await saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes);
     
     res.json({
       success: true,

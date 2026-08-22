@@ -556,7 +556,7 @@ exports.textToPDF = async (req, res) => {
     }
 
     const outBytes = await doc.save();
-    const { outName } = await saveBuffer(outBytes);
+    const { outPath, outName } = await saveBuffer(outBytes);
 
     
     res.json({ success: true, filename: outName, downloadUrl: outPath });
