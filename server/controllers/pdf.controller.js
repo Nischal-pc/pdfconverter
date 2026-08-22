@@ -281,39 +281,15 @@ exports.compressPDF = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
-    const quality = req.body.quality || 'screen'; // screen, ebook, printer, prepress
-    const outName = `${uuidv4()}-compressed.pdf`;
-    const outPath = path.join(uploadsDir, outName);
+    const bytes = file.buffer;
+    const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const outBytes = await doc.save({ useObjectStreams: true });
+    const { outPath, outName } = await saveBuffer(outBytes, '.pdf');
 
-    // Try Ghostscript
-    const gsCmd = process.env.GHOSTSCRIPT_PATH || (process.platform === 'win32' ? 'gswin64c' : 'gs');
-    const gsArgs = [
-      '-sDEVICE=pdfwrite',
-      '-dCompatibilityLevel=1.4',
-      `-dPDFSETTINGS=/${quality}`,
-      '-dNOPAUSE',
-      '-dBATCH',
-      '-dQUIET',
-      `-sOutputFile=${outPath}`,
-      file.path,
-    ];
+    const originalSize = file.size || (file.buffer ? file.buffer.length : 1);
+    const compressedSize = outBytes.length;
+    const reduction = Math.max(0, (((originalSize - compressedSize) / originalSize) * 100)).toFixed(1);
 
-    try {
-      await execAsync(`"${gsCmd}" ${gsArgs.map((a) => `"${a}"`).join(' ')}`);
-    } catch (gsErr) {
-      // Ghostscript not available — fallback: re-save with pdf-lib (minimal compression)
-      console.warn('Ghostscript unavailable, using pdf-lib fallback:', gsErr.message);
-      const bytes = file.buffer;
-      const doc = await PDFDocument.load(bytes);
-      const outBytes = await doc.save({ useObjectStreams: true });
-      fs.writeFileSync(outPath, outBytes);
-    }
-
-    const originalSize = fs.statSync(file.path).size;
-    const compressedSize = fs.statSync(outPath).size;
-    const reduction = (((originalSize - compressedSize) / originalSize) * 100).toFixed(1);
-
-    
     res.json({
       success: true,
       filename: outName,
@@ -323,7 +299,7 @@ exports.compressPDF = async (req, res) => {
       reduction: `${reduction}%`,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Compression failed: ${err.message}` });
   }
 };
 
@@ -668,7 +644,8 @@ exports.signPDF = async (req, res) => {
       const sigFile = req.files?.signature?.[0];
       if (!sigFile) return res.status(400).json({ error: 'Upload a signature image (PNG/JPG).' });
 
-      const imgBytes = fs.readFileSync(sigFile.path);
+      const imgBytes = sigFile.buffer || (sigFile.path && fs.existsSync(sigFile.path) ? fs.readFileSync(sigFile.path) : null);
+      if (!imgBytes) return res.status(400).json({ error: 'Failed to read signature image data.' });
       let image;
       try {
         image = sigFile.mimetype === 'image/png'

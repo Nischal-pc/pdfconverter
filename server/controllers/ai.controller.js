@@ -67,18 +67,24 @@ exports.ocr = async (req, res) => {
     }
 
     const outName = `${uuidv4()}-ocr.txt`;
-    let downloadUrl = `/uploads/${outName}`;
+    const mimeType = 'text/plain;charset=utf-8';
+    let downloadUrl = `data:${mimeType};base64,${Buffer.from(text || '').toString('base64')}`;
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const { put } = require('@vercel/blob');
-      const blob = await put(`uploads/${outName}`, text, {
-        access: 'public',
-        contentType: 'text/plain; charset=utf-8'
-      });
-      downloadUrl = blob.url;
-    } else {
-      const outPath = path.join(uploadsDir, outName);
-      fs.writeFileSync(outPath, text);
+      try {
+        const { put } = require('@vercel/blob');
+        const blob = await put(`uploads/${outName}`, text, {
+          access: 'public',
+          contentType: 'text/plain; charset=utf-8'
+        });
+        downloadUrl = blob.url;
+      } catch {}
+    } else if (!process.env.VERCEL) {
+      try {
+        const outPath = path.join(uploadsDir, outName);
+        fs.writeFileSync(outPath, text);
+        downloadUrl = `/uploads/${outName}`;
+      } catch {}
     }
 
     res.json({
