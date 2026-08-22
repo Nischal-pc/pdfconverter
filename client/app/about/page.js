@@ -31,7 +31,7 @@ export default function AboutPage() {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="page-container page-container--narrow" style={{ padding: '40px var(--page-gutter) 48px' }}>
+      <div className="page-container page-container--narrow">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,7 +98,6 @@ export default function AboutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.25 }}
           className="nexacore-cta-banner"
-          style={{ margin: 0, padding: '36px 24px' }}
         >
           <span className="section-tagline">Open Standards</span>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>

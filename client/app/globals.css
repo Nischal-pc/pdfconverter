@@ -129,7 +129,7 @@ p {
   width: 100%;
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 var(--page-gutter);
+  padding: 0 var(--page-gutter) clamp(48px, 6vw, 64px);
   position: relative;
   z-index: 2;
 }
@@ -146,7 +146,7 @@ p {
 
 .content-page {
   max-width: 800px;
-  margin: 32px auto 64px;
+  margin: 32px auto 48px;
   padding: clamp(24px, 5vw, 40px);
   background: var(--bg-card);
   border: 1px solid var(--border);

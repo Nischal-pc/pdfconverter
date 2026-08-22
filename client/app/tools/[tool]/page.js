@@ -28,7 +28,7 @@ export default function ToolPage({ params }) {
 
   return (
     <div className="page-shell" style={{ minHeight: 'calc(100vh - var(--nav-height))' }}>
-      <div className="page-container page-container--narrow" style={{ paddingBottom: 48 }}>
+      <div className="page-container page-container--narrow">
         <nav className="breadcrumb" aria-label="Breadcrumb">
           <Link href="/">Home</Link>
           <span>/</span>
