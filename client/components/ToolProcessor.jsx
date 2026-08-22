@@ -13,8 +13,8 @@ import ProgressBar from './ProgressBar';
 import toast from 'react-hot-toast';
 import PDFPreview from './PDFPreview';
 import VisualPDFEditor from './VisualPDFEditor';
-import { triggerFileDownload, viewFileInBrowser } from '@/lib/download';
-import { Eye, Download, PenTool, SlidersHorizontal } from 'lucide-react';
+import { triggerFileDownload, viewFileInBrowser, downloadFilesAsZip, shareDocument } from '@/lib/download';
+import { Eye, Download, Archive, Share2, PenTool, SlidersHorizontal } from 'lucide-react';
 
 export default function ToolProcessor({ tool }) {
   const { user } = useAuth();
@@ -526,7 +526,20 @@ export default function ToolProcessor({ tool }) {
               {/* Extras if Multi-file (Split / PDF to JPG) */}
               {result.files && (
                 <div className="result-block" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Extracted Files ({result.files.length}):</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Extracted Files ({result.files.length}):
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => downloadFilesAsZip(result.files, `${files[0]?.name?.replace(/\.[^/.]+$/, '') || 'PdfFlow'}-bundle.zip`)}
+                      className="btn-primary"
+                      style={{ padding: '4px 10px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Archive size={13} />
+                      <span>Download All as ZIP</span>
+                    </button>
+                  </div>
                   <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {result.files.map((file, i) => (
                       <div key={i} className="file-result-row">
@@ -565,6 +578,18 @@ export default function ToolProcessor({ tool }) {
                     >
                       <Download size={16} />
                       <span>Download File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const shared = await shareDocument(result.downloadUrl, result.filename || 'Processed-Document.pdf');
+                        if (shared) toast.success('Document shared!');
+                      }}
+                      className="btn-secondary"
+                      title="Share document via native OS share"
+                    >
+                      <Share2 size={16} />
+                      <span>Share</span>
                     </button>
                   </>
                 )}

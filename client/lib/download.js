@@ -1,4 +1,5 @@
 import { getApiBase } from './apiBase';
+import JSZip from 'jszip';
 
 /**
  * Converts a Base64 data URL to an in-memory browser Blob.
@@ -93,4 +94,89 @@ export function viewFileInBrowser(downloadUrl) {
   const base = getApiBase();
   const fileKey = downloadUrl.replace(/^\/(uploads|api\/download)\//, '');
   window.open(`${base}/uploads/${fileKey}`, '_blank', 'noopener,noreferrer');
+}
+
+/**
+ * Downloads multiple files bundled into a single in-memory .zip archive.
+ */
+export async function downloadFilesAsZip(fileList, zipFilename = 'PdfFlow-Export.zip') {
+  if (typeof window === 'undefined' || !fileList || !fileList.length) return;
+
+  const zip = new JSZip();
+
+  for (let i = 0; i < fileList.length; i++) {
+    const item = fileList[i];
+    const url = item.downloadUrl || item.url;
+    const name = item.filename || `extracted-page-${i + 1}.pdf`;
+
+    if (!url) continue;
+
+    if (url.startsWith('data:')) {
+      const parts = url.split(',');
+      zip.file(name, parts[1], { base64: true });
+    } else {
+      try {
+        const fullUrl = url.startsWith('http') ? url : `${getApiBase()}/uploads/${url.replace(/^\/(uploads|api\/download)\//, '')}`;
+        const resp = await fetch(fullUrl);
+        const blob = await resp.blob();
+        zip.file(name, blob);
+      } catch (err) {
+        console.warn(`Failed to fetch ${name} for zip bundle:`, err);
+      }
+    }
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const blobUrl = URL.createObjectURL(zipBlob);
+
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = blobUrl;
+  a.download = zipFilename.endsWith('.zip') ? zipFilename : `${zipFilename}.zip`;
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    if (document.body.contains(a)) document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }, 10000);
+}
+
+/**
+ * Triggers native Web Share on mobile/desktop if supported.
+ */
+export async function shareDocument(downloadUrl, filename = 'Document.pdf') {
+  if (typeof window === 'undefined' || !navigator.share) return false;
+
+  try {
+    let fileToShare = null;
+    if (downloadUrl.startsWith('data:')) {
+      const blob = dataUrlToBlob(downloadUrl);
+      if (blob) fileToShare = new File([blob], filename, { type: blob.type });
+    } else {
+      const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${getApiBase()}/uploads/${downloadUrl.replace(/^\/(uploads|api\/download)\//, '')}`;
+      const resp = await fetch(fullUrl);
+      const blob = await resp.blob();
+      fileToShare = new File([blob], filename, { type: blob.type });
+    }
+
+    if (fileToShare && navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
+      await navigator.share({
+        files: [fileToShare],
+        title: filename,
+      });
+      return true;
+    } else {
+      await navigator.share({
+        title: filename,
+        url: window.location.href,
+      });
+      return true;
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.warn('Share failed:', err);
+    }
+    return false;
+  }
 }

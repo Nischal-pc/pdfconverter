@@ -1,5 +1,5 @@
 'use client';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, Image as ImageIcon, Paperclip, X } from 'lucide-react';
@@ -10,6 +10,43 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
       onFiles(accepted);
     }
   }, [onFiles]);
+
+  // Global Clipboard paste support (Ctrl+V / Cmd+V)
+  useEffect(() => {
+    const handlePaste = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        return;
+      }
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const pastedFiles = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) {
+            const ext = file.type?.includes('/') ? `.${file.type.split('/')[1].replace('jpeg', 'jpg')}` : '.png';
+            const cleanFileName = file.name && file.name !== 'image.png' ? file.name : `Pasted-File-${new Date().toISOString().slice(11, 19).replace(/:/g, '')}${ext}`;
+            const namedFile = new File([file], cleanFileName, { type: file.type || 'image/png' });
+            pastedFiles.push(namedFile);
+          }
+        }
+      }
+
+      if (pastedFiles.length > 0) {
+        e.preventDefault();
+        if (multiple) {
+          onFiles(pastedFiles);
+        } else {
+          onFiles([pastedFiles[0]]);
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [onFiles, multiple]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
