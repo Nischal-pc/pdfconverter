@@ -10,14 +10,10 @@
       "use": "@vercel/next"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/index.js"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/client/$1"
+      "src": "/api/(.*)",
+      "dest": "/server/index.js"
     }
   ]
 }

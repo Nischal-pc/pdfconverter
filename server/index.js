@@ -133,19 +133,23 @@ cron.schedule('0 * * * *', () => {
 // Connect to MongoDB and start server
 const startServer = async () => {
   try {
-    if (process.env.MONGO_URI) {
+    if (process.env.MONGO_URI && mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
       console.log('✅ Connected to MongoDB');
-    } else {
+    } else if (!process.env.MONGO_URI) {
       console.log('⚠️  No MONGO_URI set. File history and auth disabled.');
     }
   } catch (err) {
     console.warn('⚠️  MongoDB connection failed:', err.message);
   }
 
-  app.listen(PORT, () => {
-    console.log(`🚀 PDF Tools Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`🚀 PDF Tools Server running on http://localhost:${PORT}`);
+    });
+  }
 };
 
 startServer();
+
+module.exports = app;

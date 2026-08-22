@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Next.js build output
+.next/
+client/.next/
+out/
+client/out/
+
+# Environment files
+.env
+.env*.local
+client/.env*.local
+server/.env
+
+# Uploads and temporary files
+uploads/
+*.log
+.DS_Store
+.vercel
