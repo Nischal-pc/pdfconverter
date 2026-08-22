@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 export default function ToolCard({ tool, index = 0 }) {
+  const iconBg = tool.iconColor || '#374151';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -15,8 +17,12 @@ export default function ToolCard({ tool, index = 0 }) {
         <div className="tool-card-inner">
           {/* Card Header with Icon & Optional Badge */}
           <div className="tool-card-top">
-            <div className="tool-card-icon-wrapper" aria-hidden="true">
-              <div className="tool-card-icon">
+            <div
+              className="tool-card-icon-wrapper"
+              aria-hidden="true"
+              style={{ background: iconBg }}
+            >
+              <div className="tool-card-icon" style={{ color: '#ffffff' }}>
                 {tool.icon}
               </div>
             </div>
