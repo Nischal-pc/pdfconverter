@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import PDFPreview from './PDFPreview';
 import VisualPDFEditor from './VisualPDFEditor';
 import { triggerFileDownload, viewFileInBrowser, downloadFilesAsZip, shareDocument } from '@/lib/download';
-import { Eye, Download, Archive, Share2, PenTool, SlidersHorizontal } from 'lucide-react';
+import { Eye, Download, Archive, Share2, PenTool, SlidersHorizontal, CheckCircle2, FileCheck } from 'lucide-react';
 
 export default function ToolProcessor({ tool }) {
   const { user } = useAuth();
@@ -349,34 +349,38 @@ export default function ToolProcessor({ tool }) {
           {/* Result Block */}
           {result && (
             <div className="download-card download-card-inner">
-              <div style={{ fontSize: 48 }}>🎉</div>
-              <div>
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Your file is ready!</h3>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Downloaded file can be saved directly to your computer.
-                  {result.pagesSigned != null && (
-                    <> Signed <strong>{result.pagesSigned}</strong> of <strong>{result.totalPages}</strong> pages.</>
-                  )}
-                  {result.pagesModified != null && result.pagesSigned == null && (
-                    <> Modified <strong>{result.pagesModified}</strong> page(s).</>
-                  )}
-                </p>
+              <div className="download-header">
+                <div className="download-success-icon" aria-hidden="true">
+                  <CheckCircle2 size={24} />
+                </div>
+                <div className="download-header-text">
+                  <h3>Your file is ready!</h3>
+                  <p>
+                    Downloaded file can be saved directly to your device.
+                    {result.pagesSigned != null && (
+                      <> Signed <strong>{result.pagesSigned}</strong> of <strong>{result.totalPages}</strong> pages.</>
+                    )}
+                    {result.pagesModified != null && result.pagesSigned == null && (
+                      <> Modified <strong>{result.pagesModified}</strong> page(s).</>
+                    )}
+                  </p>
+                </div>
               </div>
 
               {/* Extras if compress */}
               {result.reduction && (
                 <div className="stat-row">
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Original</div>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{(result.originalSize / 1024 / 1024).toFixed(2)} MB</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Original</div>
+                    <div className="stat-value">{(result.originalSize / 1024 / 1024).toFixed(2)} MB</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Compressed</div>
-                    <div style={{ fontWeight: 600, color: 'var(--accent)' }}>{(result.compressedSize / 1024 / 1024).toFixed(2)} MB</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Compressed</div>
+                    <div className="stat-value" style={{ color: 'var(--color-blue)' }}>{(result.compressedSize / 1024 / 1024).toFixed(2)} MB</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Reduced</div>
-                    <div style={{ fontWeight: 600, color: '#10b981' }}>{result.reduction}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Reduced</div>
+                    <div className="stat-value" style={{ color: '#10b981' }}>{result.reduction}</div>
                   </div>
                 </div>
               )}
@@ -396,7 +400,7 @@ export default function ToolProcessor({ tool }) {
                       Copy
                     </button>
                   </div>
-                  <pre>
+                  <pre style={{ maxHeight: 180, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                     {result.text}
                   </pre>
                 </div>
@@ -404,7 +408,7 @@ export default function ToolProcessor({ tool }) {
 
               {/* Extras if Text Extracted (PDF to Text / Word to Text / Image to Text) */}
               {result.text && !result.summary && (
-                <div className="result-block" style={{ padding: 18, fontSize: 13, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+                <div className="result-block">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Extracted Text Preview:</div>
                     <button
@@ -417,7 +421,7 @@ export default function ToolProcessor({ tool }) {
                       Copy Text
                     </button>
                   </div>
-                  <div style={{ maxHeight: 180, overflowY: 'auto', whiteSpace: 'pre-wrap', lineHeight: 1.6, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
+                  <div style={{ maxHeight: 180, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
                     {result.text}
                   </div>
                 </div>
@@ -425,7 +429,7 @@ export default function ToolProcessor({ tool }) {
 
               {/* Extras if Word to HTML */}
               {result.htmlPreview && (
-                <div className="result-block" style={{ padding: 18, fontSize: 13, background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+                <div className="result-block">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>HTML Output Preview:</div>
                     <button
@@ -438,13 +442,13 @@ export default function ToolProcessor({ tool }) {
                       Copy HTML
                     </button>
                   </div>
-                  <div style={{ maxHeight: 180, overflowY: 'auto', lineHeight: 1.5, color: 'var(--text-primary)', padding: 12, background: '#ffffff', color: '#1e293b', borderRadius: 8 }} dangerouslySetInnerHTML={{ __html: result.htmlPreview }} />
+                  <div style={{ maxHeight: 180, overflowY: 'auto', lineHeight: 1.5, padding: 12, background: '#ffffff', color: '#1e293b', borderRadius: 8 }} dangerouslySetInnerHTML={{ __html: result.htmlPreview }} />
                 </div>
               )}
 
               {/* Extras if Summarize */}
               {result.summary && (
-                <div className="result-block" style={{ padding: 20, fontSize: 14 }}>
+                <div className="result-block">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Summary:</div>
                     <button
@@ -457,76 +461,59 @@ export default function ToolProcessor({ tool }) {
                       Copy
                     </button>
                   </div>
-                  <div style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>
+                  <div style={{ lineHeight: 1.6, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
                     {result.summary}
                   </div>
-                  <div className="meta-row" style={{ marginTop: 12 }}>
-                    <span>Original size: {result.originalLength} chars</span>
+                  <div className="meta-row" style={{ marginTop: 12, flexWrap: 'wrap' }}>
+                    <span>Original: {result.originalLength} chars</span>
                     <span>•</span>
-                    <span>Summary size: {result.summaryLength} chars</span>
+                    <span>Summary: {result.summaryLength} chars</span>
                     <span>•</span>
-                    <span>Compressed: {result.compressionRatio}</span>
+                    <span>Saved: {result.compressionRatio}</span>
                   </div>
                 </div>
               )}
 
               {/* Extras if Word Count tool */}
               {result.wordCount != null && (
-                <div className="stat-row" style={{ marginBottom: 16 }}>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Words</div>
-                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>{result.wordCount.toLocaleString()}</div>
+                <div className="stat-row">
+                  <div className="stat-item">
+                    <div className="stat-label">Words</div>
+                    <div className="stat-value">{result.wordCount.toLocaleString()}</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Characters</div>
-                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-blue)', fontFamily: 'JetBrains Mono, monospace' }}>{result.charCount.toLocaleString()}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Chars</div>
+                    <div className="stat-value" style={{ color: 'var(--color-blue)' }}>{result.charCount.toLocaleString()}</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Read Time</div>
-                    <div style={{ fontWeight: 700, fontSize: 18, color: '#10b981', fontFamily: 'JetBrains Mono, monospace' }}>{result.readingTime}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Read Time</div>
+                    <div className="stat-value" style={{ color: '#10b981' }}>{result.readingTime}</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Avg Words/Pg</div>
-                    <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>{result.avgWordsPerPage}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Avg/Page</div>
+                    <div className="stat-value">{result.avgWordsPerPage}</div>
                   </div>
-                </div>
-              )}
-
-              {/* Extras if OCR result has charCount + method */}
-              {result.charCount != null && !result.summary && !result.reduction && !result.wordCount && (
-                <div className="meta-row" style={{ justifyContent: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Characters extracted: <strong style={{ color: 'var(--text-secondary)' }}>{result.charCount.toLocaleString()}</strong></span>
-                  {result.method && (
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                      background: result.method === 'digital-extraction' ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
-                      border: `1px solid ${result.method === 'digital-extraction' ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
-                      color: result.method === 'digital-extraction' ? '#10b981' : 'var(--accent)',
-                    }}>
-                      {result.method === 'digital-extraction' ? '⚡ Digital extraction' : '👁 OCR'}
-                    </span>
-                  )}
                 </div>
               )}
 
               {/* Extras if remove-pages */}
               {result.pagesRemoved != null && (
                 <div className="stat-row">
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Pages Removed</div>
-                    <div style={{ fontWeight: 600, color: '#ef4444' }}>{result.pagesRemoved}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Pages Removed</div>
+                    <div className="stat-value" style={{ color: '#ef4444' }}>{result.pagesRemoved}</div>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Pages Remaining</div>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{result.pagesRemaining}</div>
+                  <div className="stat-item">
+                    <div className="stat-label">Pages Remaining</div>
+                    <div className="stat-value">{result.pagesRemaining}</div>
                   </div>
                 </div>
               )}
 
               {/* Extras if Multi-file (Split / PDF to JPG) */}
               {result.files && (
-                <div className="result-block" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div className="result-block" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Extracted Files ({result.files.length}):
                     </div>
@@ -534,23 +521,23 @@ export default function ToolProcessor({ tool }) {
                       type="button"
                       onClick={() => downloadFilesAsZip(result.files, `${files[0]?.name?.replace(/\.[^/.]+$/, '') || 'PdfFlow'}-bundle.zip`)}
                       className="btn-primary"
-                      style={{ padding: '4px 10px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      style={{ padding: '6px 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                     >
-                      <Archive size={13} />
-                      <span>Download All as ZIP</span>
+                      <Archive size={14} />
+                      <span>Download All (ZIP)</span>
                     </button>
                   </div>
-                  <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
                     {result.files.map((file, i) => (
                       <div key={i} className="file-result-row">
-                        <span style={{ color: 'var(--text-primary)' }}>
+                        <span className="file-result-row-name">
                           {file.filename.split('-').slice(1).join('-')} {file.pages ? `(Pages: ${file.pages})` : ''}
                         </span>
                         <button
                           type="button"
                           onClick={() => triggerFileDownload(file.downloadUrl, file.filename || `extracted-page-${i + 1}.pdf`)}
                           className="btn-secondary"
-                          style={{ padding: '4px 10px', fontSize: 12 }}
+                          style={{ padding: '6px 12px', fontSize: 12, flexShrink: 0 }}
                         >
                           Download
                         </button>
@@ -560,24 +547,24 @@ export default function ToolProcessor({ tool }) {
                 </div>
               )}
 
-              <div className="result-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <div className="result-actions">
                 {result.downloadUrl && (
                   <>
                     <button
                       type="button"
-                      onClick={() => viewFileInBrowser(result.downloadUrl)}
-                      className="btn-primary"
-                    >
-                      <Eye size={16} />
-                      <span>View in Browser</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => triggerFileDownload(result.downloadUrl, result.filename || 'Processed-Document.pdf')}
-                      className="btn-secondary"
+                      className="btn-primary"
                     >
                       <Download size={16} />
                       <span>Download File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => viewFileInBrowser(result.downloadUrl)}
+                      className="btn-secondary"
+                    >
+                      <Eye size={16} />
+                      <span>View in Browser</span>
                     </button>
                     <button
                       type="button"
@@ -586,7 +573,7 @@ export default function ToolProcessor({ tool }) {
                         if (shared) toast.success('Document shared!');
                       }}
                       className="btn-secondary"
-                      title="Share document via native OS share"
+                      title="Share document"
                     >
                       <Share2 size={16} />
                       <span>Share</span>

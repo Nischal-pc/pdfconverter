@@ -1110,6 +1110,192 @@ p {
 }
 
 /* ========================================================================= */
+/* DOWNLOAD & RESULT CARD (100% RESPONSIVE FOR ALL SCREEN SIZES)             */
+/* ========================================================================= */
+.download-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(18px, 3.5vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+
+.download-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.download-success-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.download-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.download-header-text h3 {
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.download-header-text p {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Stat Metrics Grid */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  width: 100%;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Result Blocks & File Lists */
+.result-block {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.file-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  gap: 10px;
+  width: 100%;
+}
+
+.file-result-row-name {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Result Actions — Mobile Adaptive */
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  padding-top: 6px;
+}
+
+.result-actions .btn-primary,
+.result-actions .btn-secondary {
+  flex: 1 1 auto;
+  min-height: 42px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .download-card {
+    padding: 16px 12px;
+    gap: 14px;
+  }
+
+  .download-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .download-success-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .result-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .result-actions .btn-primary,
+  .result-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px; /* Standard Apple iOS / Android touch target */
+  }
+
+  .file-result-row {
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .file-result-row button {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+}
+
+/* ========================================================================= */
 /* VISUAL PDF EDITOR STYLES                                                  */
 /* ========================================================================= */
 .visual-editor-container {
