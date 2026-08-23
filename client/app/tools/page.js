@@ -46,24 +46,26 @@ export default function ToolsDirectoryPage() {
           </div>
 
           {/* Filter Pills */}
-          <div className="bento-filter-bar" style={{ marginBottom: 40 }}>
-            <button
-              type="button"
-              className={`bento-filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('all')}
-            >
-              All Tools ({ALL_TOOLS.length})
-            </button>
-            {TOOL_CATEGORIES.map((cat) => (
+          <div className="bento-filter-wrap">
+            <div className="bento-filter-bar">
               <button
-                key={cat.id}
                 type="button"
-                className={`bento-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.id)}
+                className={`bento-filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('all')}
               >
-                {cat.label} ({cat.tools.length})
+                All Tools ({ALL_TOOLS.length})
               </button>
-            ))}
+              {TOOL_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`bento-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  {cat.label} ({cat.tools.length})
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

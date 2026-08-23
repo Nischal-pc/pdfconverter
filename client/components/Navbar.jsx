@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { TOOL_CATEGORIES } from '@/lib/tools';
@@ -61,6 +62,8 @@ function SearchIcon() {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isToolsPage = pathname === '/tools';
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -144,39 +147,41 @@ export default function Navbar() {
             <Link href="/about" className="navbar-text-link">About Us</Link>
             <Link href="/history" className="navbar-text-link" title="Stored strictly in your local browser — zero cloud retention">Local History</Link>
 
-            <button
-              type="button"
-              className="navbar-search-trigger"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-              title="Quick Search (Ctrl + K)"
-              aria-label="Quick Search"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'var(--border)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '5px 10px',
-                color: 'var(--text-secondary)',
-                fontSize: 12,
-                cursor: 'pointer',
-              }}
-            >
-              <SearchIcon />
-              <span style={{ fontSize: 12 }}>Search</span>
-              <kbd style={{
-                fontSize: 11,
-                fontFamily: 'JetBrains Mono, monospace',
-                padding: '1px 5px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-muted)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-              }}>
-                ⌘K
-              </kbd>
-            </button>
+            {!isToolsPage && (
+              <button
+                type="button"
+                className="navbar-search-trigger"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                title="Quick Search (Ctrl + K)"
+                aria-label="Quick Search"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'var(--border)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '5px 10px',
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                <SearchIcon />
+                <span style={{ fontSize: 12 }}>Search</span>
+                <kbd style={{
+                  fontSize: 11,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  padding: '1px 5px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}>
+                  ⌘K
+                </kbd>
+              </button>
+            )}
 
             <button
               type="button"

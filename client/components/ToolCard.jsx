@@ -35,7 +35,7 @@ export default function ToolCard({ tool, index = 0 }) {
           {/* Text content */}
           <div className="tool-card-body">
             <div className="tool-card-title-row">
-              <h3 className="tool-card-title">{tool.label}</h3>
+              <h2 className="tool-card-title">{tool.label}</h2>
               <ArrowUpRight size={15} className="tool-card-arrow" />
             </div>
             <p className="tool-card-desc">{tool.desc}</p>

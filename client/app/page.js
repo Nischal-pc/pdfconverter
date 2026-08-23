@@ -174,37 +174,39 @@ export default function Home() {
           </div>
 
           {/* Horizontal Scrollable Filter Bar */}
-          <div className="bento-filter-bar" role="tablist" aria-label="Tool Categories">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === 'popular'}
-              className={`bento-filter-btn ${activeCategory === 'popular' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('popular')}
-            >
-              Popular Tools ({popularTools.length})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === 'all'}
-              className={`bento-filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('all')}
-            >
-              All Tools ({ALL_TOOLS.length})
-            </button>
-            {TOOL_CATEGORIES.map((cat) => (
+          <div className="bento-filter-wrap">
+            <div className="bento-filter-bar" role="tablist" aria-label="Tool Categories">
               <button
-                key={cat.id}
                 type="button"
                 role="tab"
-                aria-selected={activeCategory === cat.id}
-                className={`bento-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.id)}
+                aria-selected={activeCategory === 'popular'}
+                className={`bento-filter-btn ${activeCategory === 'popular' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('popular')}
               >
-                {cat.label} ({cat.tools.length})
+                Popular Tools ({popularTools.length})
               </button>
-            ))}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeCategory === 'all'}
+                className={`bento-filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('all')}
+              >
+                All Tools ({ALL_TOOLS.length})
+              </button>
+              {TOOL_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCategory === cat.id}
+                  className={`bento-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  {cat.label} ({cat.tools.length})
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Grouped Category Sections when 'all' is selected vs Focused Grid for Specific Category */}

@@ -206,7 +206,7 @@ p {
 .navbar-desktop {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 @media (max-width: 1024px) {
@@ -621,16 +621,17 @@ p {
 
 .tool-card-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  font-size: 11px;
-  font-weight: 600;
+  top: 12px;
+  right: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  background: var(--border);
-  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(56, 189, 248, 0.14);
+  color: var(--color-blue);
+  border: 1px solid rgba(56, 189, 248, 0.32);
   line-height: 1.2;
 }
 
@@ -676,9 +677,31 @@ p {
   line-height: 1.45;
 }
 
-/* Category Filters — Clean Single-Line Horizontal Scroll */
+/* Category Filters — Clean Single-Line Horizontal Scroll with Edge Indicators */
 .bento-explorer-section {
   padding: 32px 0 64px;
+}
+
+.bento-filter-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.bento-filter-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 14px;
+  width: 48px;
+  background: linear-gradient(to right, transparent, var(--bg-primary));
+  pointer-events: none;
+  opacity: 0.95;
+  border-radius: var(--radius-sm);
 }
 
 .bento-filter-bar {
@@ -690,8 +713,18 @@ p {
   gap: 8px;
   justify-content: flex-start;
   max-width: 100%;
-  padding: 4px 4px 14px;
-  margin-bottom: 24px;
+  padding: 4px 24px 14px 4px;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1100px) {
+  .bento-filter-wrap::after {
+    display: none;
+  }
+  .bento-filter-bar {
+    justify-content: center;
+    padding-right: 4px;
+  }
 }
 
 .bento-filter-bar::-webkit-scrollbar {
@@ -1639,18 +1672,29 @@ p {
 .footer-inner {
   max-width: var(--content-max);
   margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr 1fr;
   align-items: flex-start;
-  gap: clamp(24px, 4vw, 48px);
+  gap: clamp(24px, 3.5vw, 48px);
   padding-bottom: 36px;
   border-bottom: 1px solid var(--border);
 }
 
+@media (max-width: 960px) {
+  .footer-inner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
 .footer-brand {
-  max-width: 340px;
-  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
 }
 
 .footer-brand p {
@@ -1660,16 +1704,18 @@ p {
   line-height: 1.6;
 }
 
-.footer-columns {
+.footer-col {
   display: flex;
-  flex-wrap: wrap;
-  gap: clamp(24px, 4vw, 48px);
-  flex: 2 1 400px;
-  justify-content: flex-start;
+  flex-direction: column;
 }
 
-.footer-columns > div {
-  min-width: 130px;
+.footer-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
 }
 
 .footer-nav-link {
