@@ -29,19 +29,31 @@ app.use((req, res, next) => {
 });
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow same-origin requests (server-side) and null origin (file://)
     if (!origin) return callback(null, true);
-    const allowed = [
-      process.env.CLIENT_URL || 'http://localhost:3000',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-    ];
-    if (allowed.includes(origin) || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+
+    // Allow localhost in any form (development)
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
-    callback(null, process.env.CLIENT_URL || 'http://localhost:3000');
+
+    // Allow the configured CLIENT_URL (e.g. the Vercel production URL)
+    const clientUrl = process.env.CLIENT_URL || '';
+    if (clientUrl && origin === clientUrl) {
+      return callback(null, true);
+    }
+
+    // Allow ANY https:// origin — this covers Vercel preview URLs, custom domains,
+    // and mobile browsers on external networks (Mac, iPhone, Android)
+    if (origin.startsWith('https://')) {
+      return callback(null, true);
+    }
+
+    // Reject all other origins
+    callback(new Error(`CORS: Origin '${origin}' not allowed`));
   },
   credentials: true,
-  exposedHeaders: ['Content-Disposition'],
+  exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type'],
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -101,17 +113,20 @@ app.get('/api/download/:filename', (req, res) => {
   }
 
   // Sanitize filename for Windows filesystem (remove illegal chars: \ / : * ? " < > |)
-  const safeWindowsName = customName.replace(/[\\/:*?"<>|]/g, '_');
+  const safeAsciiName = customName.replace(/[\\/:*?"<>|]/g, '_').replace(/[^\x00-\x7F]/g, '_');
+  // RFC 5987 encoded filename for full Unicode support on Safari/iOS/Android
+  const rfc5987Name = encodeURIComponent(customName).replace(/'/g, '%27');
   const contentType = MIME_MAP[realExt] || 'application/octet-stream';
 
   res.writeHead(200, {
     'Content-Type': contentType,
     'Content-Length': stat.size,
-    'Content-Disposition': `attachment; filename="${safeWindowsName}"`,
+    'Content-Disposition': `attachment; filename="${safeAsciiName}"; filename*=UTF-8''${rfc5987Name}`,
     'Access-Control-Allow-Origin': req.headers.origin || '*',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Expose-Headers': 'Content-Disposition, Content-Length',
-    'Cache-Control': 'no-cache',
+    'Access-Control-Expose-Headers': 'Content-Disposition, Content-Length, Content-Type',
+    'Vary': 'Origin',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
   });
 
   const stream = fs.createReadStream(filePath);

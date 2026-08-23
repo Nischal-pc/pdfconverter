@@ -52,23 +52,53 @@ export function triggerFileDownload(downloadUrl, filename = 'Document.pdf') {
   }
   cleanName = cleanName.replace(/[\\/:*?"<>|]/g, '_');
 
-  const isIOS = typeof navigator !== 'undefined' && (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  );
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+
+  // Detect iOS: native Safari, Chrome on iOS (CriOS), Firefox on iOS (FxiOS)
+  const isIOS = /iPad|iPhone|iPod/i.test(ua) ||
+    /CriOS/i.test(ua) ||
+    /FxiOS/i.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Detect Android
+  const isAndroid = /Android/i.test(ua);
 
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = finalUrl;
   a.setAttribute('download', cleanName);
   a.download = cleanName;
+
   if (isIOS) {
+    // iOS Safari / Chrome: open in new tab — triggers native download/preview sheet
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
+  } else if (isAndroid && isCreatedBlob && navigator.share && navigator.canShare) {
+    // Android Chrome: try Web Share API with File (native intent for saving)
+    try {
+      const blob = dataUrlToBlob(downloadUrl);
+      if (blob) {
+        const shareFile = new File([blob], cleanName, { type: blob.type });
+        if (navigator.canShare({ files: [shareFile] })) {
+          navigator.share({ files: [shareFile], title: cleanName }).catch(() => {
+            // If share fails, fall through to anchor click
+            document.body.appendChild(a);
+            a.click();
+          });
+          setTimeout(() => {
+            if (document.body.contains(a)) document.body.removeChild(a);
+            if (isCreatedBlob) URL.revokeObjectURL(finalUrl);
+          }, 30000);
+          return;
+        }
+      }
+    } catch (_) { /* fall through */ }
   }
+
   document.body.appendChild(a);
   a.click();
 
+  // 30 seconds — mobile browsers need more time to initiate the download
   setTimeout(() => {
     if (document.body.contains(a)) {
       document.body.removeChild(a);
@@ -76,7 +106,7 @@ export function triggerFileDownload(downloadUrl, filename = 'Document.pdf') {
     if (isCreatedBlob) {
       URL.revokeObjectURL(finalUrl);
     }
-  }, 15000);
+  }, 30000);
 }
 
 /**

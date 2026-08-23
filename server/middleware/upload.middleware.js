@@ -8,18 +8,14 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Use memory storage for Vercel Serverless environment
+// Use memory storage — works in Vercel serverless and all environments
 const storage = multer.memoryStorage();
 
+// Accept all files unconditionally — security is enforced by validateFileSignatures
+// which inspects actual binary magic bytes (not MIME strings that iOS/Android fabricate).
+// iOS Safari sends PDFs as 'application/octet-stream'; Android Chrome does the same for docx.
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname || '').toLowerCase();
-  const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.tiff', '.tif', '.bmp', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt'];
-  
-  if (allowedExtensions.includes(ext) || file.mimetype?.startsWith('image/') || file.mimetype === 'application/pdf') {
-    cb(null, true);
-  } else {
-    cb(null, true); // Allow all standard file uploads
-  }
+  cb(null, true);
 };
 
 const upload = multer({
@@ -27,6 +23,7 @@ const upload = multer({
   fileFilter,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 50 * 1024 * 1024, // 50MB
+    files: 25, // max 25 files per request
   },
 });
 

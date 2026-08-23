@@ -48,12 +48,19 @@ const validateFileSignatures = (req, res, next) => {
   if (!files || files.length === 0) return next();
 
   for (const file of files) {
+    // Skip files with no buffer or very small buffers (can't validate)
     if (!file.buffer || file.buffer.length < 4) continue;
 
-    const ext = (file.originalname || '').split('.').pop().toLowerCase();
+    const rawExt = (file.originalname || '').split('.').pop() || '';
+    const ext = rawExt.toLowerCase(); // normalize iOS uppercase .PDF, .JPG, .PNG
 
-    // Plain text formats (no binary signature required)
-    if (['txt', 'md', 'markdown', 'csv', 'html', 'json'].includes(ext)) {
+    // Plain text / markup formats — no binary signature required
+    if (['txt', 'md', 'markdown', 'csv', 'html', 'htm', 'json', 'xml'].includes(ext)) {
+      continue;
+    }
+
+    // Files with no extension or unknown extension — skip signature check, let controller handle
+    if (!ext || ext === rawExt.toUpperCase().toLowerCase() && ext.length > 4) {
       continue;
     }
 
@@ -73,6 +80,7 @@ const validateFileSignatures = (req, res, next) => {
     if (['docx', 'xlsx', 'pptx', 'doc', 'xls', 'ppt'].includes(ext) && !MAGIC_SIGNATURES.zip(file.buffer)) {
       return res.status(400).json({ error: `Invalid file format: '${file.originalname}' does not appear to be a valid Office document.` });
     }
+    // GIF, BMP, TIFF, other image types — allow through (sharp handles them on server)
   }
 
   next();

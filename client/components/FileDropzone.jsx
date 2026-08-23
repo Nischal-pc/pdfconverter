@@ -1,21 +1,81 @@
 'use client';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, Image as ImageIcon, Paperclip, X } from 'lucide-react';
 
+// MIME type map for healing files that iOS/Android sends as octet-stream or empty
+const EXT_MIME_MAP = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  bmp: 'image/bmp',
+  tiff: 'image/tiff',
+  tif: 'image/tiff',
+  txt: 'text/plain',
+  md: 'text/markdown',
+  markdown: 'text/markdown',
+  csv: 'text/csv',
+  html: 'text/html',
+  htm: 'text/html',
+};
+
+/**
+ * Heals a File object that has a missing or generic MIME type (iOS/Android quirk).
+ * Re-creates the File with the correct MIME based on the file extension.
+ */
+function healFileMime(file) {
+  if (!file) return file;
+  const ext = (file.name || '').split('.').pop().toLowerCase();
+  const correctMime = EXT_MIME_MAP[ext];
+  if (!correctMime) return file;
+  // Only heal if MIME is missing, empty, or generic octet-stream
+  if (!file.type || file.type === 'application/octet-stream' || file.type === '') {
+    return new File([file], file.name, { type: correctMime, lastModified: file.lastModified });
+  }
+  return file;
+}
+
+/**
+ * Detects iOS or Android touch device for input accept override.
+ * iPhone/iPad use Apple UTIs that confuse the file picker when accept is strict.
+ */
+function isMobileBrowser() {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 export default function FileDropzone({ accept, multiple = false, onFiles, files = [], onRemove }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(isMobileBrowser());
+  }, []);
+
   const onDrop = useCallback((accepted, fileRejections) => {
-    let finalFiles = accepted ? [...accepted] : [];
+    let rawFiles = accepted ? [...accepted] : [];
 
     // Fallback for iOS Safari / macOS Chrome where Apple UTI or empty MIME causes react-dropzone rejection
     if (fileRejections && fileRejections.length > 0) {
       fileRejections.forEach(({ file }) => {
-        if (file && !finalFiles.some((f) => f.name === file.name && f.size === file.size)) {
-          finalFiles.push(file);
+        if (file && !rawFiles.some((f) => f.name === file.name && f.size === file.size)) {
+          rawFiles.push(file);
         }
       });
     }
+
+    // Heal MIME types — iOS sends PDFs as 'application/octet-stream'
+    const finalFiles = rawFiles.map(healFileMime);
 
     if (finalFiles.length > 0) {
       onFiles(finalFiles);
@@ -61,7 +121,9 @@ export default function FileDropzone({ accept, multiple = false, onFiles, files 
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept,
+    // On iOS/Android: bypass strict MIME accept to show all files in the OS picker.
+    // Server-side magic byte validation handles security — we can't trust browser MIME strings.
+    accept: isMobile ? undefined : accept,
     multiple,
     useFsAccessApi: false, // Prevents File System Access API freezes on iOS & Mac Chrome
   });
