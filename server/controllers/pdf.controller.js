@@ -9,7 +9,16 @@ const execAsync = promisify(exec);
 
 const { normalizePDFBuffer } = require('../utils/pdfNormalizer');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
+const os = require('os');
+const uploadsDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../../uploads');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {}
 
 const safeUnlink = (filePath) => {
   if (!filePath) return;
@@ -58,13 +67,12 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
     }
   }
   
-  if (!process.env.VERCEL) {
-    try {
-      const outPath = path.join(uploadsDir, outName);
-      fs.writeFileSync(outPath, finalBuf);
-      return { outPath: `/uploads/${outName}`, outName };
-    } catch {}
-  }
+  // Write to uploads directory for local / same-instance access
+  try {
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    const outPath = path.join(uploadsDir, outName);
+    fs.writeFileSync(outPath, finalBuf);
+  } catch {}
 
   // Direct In-Browser / Chrome memory delivery (No external cloud storage needed)
   const mimeType = ext === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

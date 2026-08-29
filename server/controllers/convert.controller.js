@@ -11,7 +11,16 @@ const execAsync = promisify(exec);
 
 const { normalizePDFBuffer } = require('../utils/pdfNormalizer');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
+const os = require('os');
+const uploadsDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../../uploads');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {}
 
 const safeUnlink = (filePath) => {
   if (!filePath) return;
@@ -52,14 +61,12 @@ const saveBuffer = async (buffer, ext = '.pdf') => {
     }
   }
   
-  if (!process.env.VERCEL) {
-    try {
-      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-      const outPath = path.join(uploadsDir, outName);
-      fs.writeFileSync(outPath, finalBuf);
-      return { outPath: `/uploads/${outName}`, outName };
-    } catch {}
-  }
+  // Write to uploads directory for local / same-instance access
+  try {
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    const outPath = path.join(uploadsDir, outName);
+    fs.writeFileSync(outPath, finalBuf);
+  } catch {}
 
   // Direct In-Browser / Chrome memory delivery (No external cloud storage needed)
   const mimeType = ext === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -295,24 +302,38 @@ exports.pdfToJPG = async (req, res) => {
 
     const dpi = parseInt(req.body.dpi || '150');
     const scale = Math.max(0.5, Math.min(4, dpi / 72));
-
     const fileBuffer = file.buffer;
-    const mupdf = await import('mupdf');
-    const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
-    const pageCount = doc.countPages();
-
-    if (pageCount === 0) {
-      return res.status(400).json({ error: 'The PDF contains no pages.' });
-    }
-
     const generatedFiles = [];
 
-    for (let i = 0; i < Math.min(pageCount, 10); i++) {
-      const page = doc.loadPage(i);
-      const pixmap = page.toPixmap(mupdf.Matrix.scale(scale, scale), mupdf.ColorSpace.DeviceRGB, false);
-      const jpegBuffer = Buffer.from(pixmap.asJPEG(90));
-      const { outPath, outName } = await saveBuffer(jpegBuffer, '.jpg');
-      generatedFiles.push({ filename: outName, downloadUrl: outPath });
+    try {
+      const mupdf = await import('mupdf');
+      const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
+      const pageCount = doc.countPages();
+
+      if (pageCount === 0) {
+        return res.status(400).json({ error: 'The PDF contains no pages.' });
+      }
+
+      for (let i = 0; i < Math.min(pageCount, 10); i++) {
+        const page = doc.loadPage(i);
+        const pixmap = page.toPixmap(mupdf.Matrix.scale(scale, scale), mupdf.ColorSpace.DeviceRGB, false);
+        const jpegBuffer = Buffer.from(pixmap.asJPEG(90));
+        const { outPath, outName } = await saveBuffer(jpegBuffer, '.jpg');
+        generatedFiles.push({ filename: outName, downloadUrl: outPath });
+      }
+    } catch (mupdfErr) {
+      console.warn('mupdf failed, falling back to pdf-img-convert:', mupdfErr.message);
+      const pdf2img = require('pdf-img-convert');
+      const images = await pdf2img.convert(fileBuffer, { scale: Math.max(1, Math.min(3, scale)) });
+      for (let i = 0; i < Math.min(images.length, 10); i++) {
+        const jpegBuffer = await sharp(images[i]).jpeg({ quality: 90 }).toBuffer();
+        const { outPath, outName } = await saveBuffer(jpegBuffer, '.jpg');
+        generatedFiles.push({ filename: outName, downloadUrl: outPath });
+      }
+    }
+
+    if (generatedFiles.length === 0) {
+      return res.status(500).json({ error: 'Failed to convert any pages from the PDF.' });
     }
 
     return res.json({
@@ -333,22 +354,37 @@ exports.pdfToPNG = async (req, res) => {
     if (!file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
     const fileBuffer = file.buffer;
-    const mupdf = await import('mupdf');
-    const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
-    const pageCount = doc.countPages();
-
-    if (pageCount === 0) {
-      return res.status(400).json({ error: 'The PDF contains no pages.' });
-    }
-
     const generatedFiles = [];
 
-    for (let i = 0; i < Math.min(pageCount, 10); i++) {
-      const page = doc.loadPage(i);
-      const pixmap = page.toPixmap(mupdf.Matrix.scale(2, 2), mupdf.ColorSpace.DeviceRGB, true);
-      const pngBuffer = Buffer.from(pixmap.asPNG());
-      const { outPath, outName } = await saveBuffer(pngBuffer, '.png');
-      generatedFiles.push({ filename: outName, downloadUrl: outPath });
+    try {
+      const mupdf = await import('mupdf');
+      const doc = mupdf.Document.openDocument(fileBuffer, 'application/pdf');
+      const pageCount = doc.countPages();
+
+      if (pageCount === 0) {
+        return res.status(400).json({ error: 'The PDF contains no pages.' });
+      }
+
+      for (let i = 0; i < Math.min(pageCount, 10); i++) {
+        const page = doc.loadPage(i);
+        const pixmap = page.toPixmap(mupdf.Matrix.scale(2, 2), mupdf.ColorSpace.DeviceRGB, true);
+        const pngBuffer = Buffer.from(pixmap.asPNG());
+        const { outPath, outName } = await saveBuffer(pngBuffer, '.png');
+        generatedFiles.push({ filename: outName, downloadUrl: outPath });
+      }
+    } catch (mupdfErr) {
+      console.warn('mupdf failed, falling back to pdf-img-convert:', mupdfErr.message);
+      const pdf2img = require('pdf-img-convert');
+      const images = await pdf2img.convert(fileBuffer, { scale: 2.0 });
+      for (let i = 0; i < Math.min(images.length, 10); i++) {
+        const pngBuffer = await sharp(images[i]).png().toBuffer();
+        const { outPath, outName } = await saveBuffer(pngBuffer, '.png');
+        generatedFiles.push({ filename: outName, downloadUrl: outPath });
+      }
+    }
+
+    if (generatedFiles.length === 0) {
+      return res.status(500).json({ error: 'Failed to convert any pages from the PDF.' });
     }
 
     return res.json({

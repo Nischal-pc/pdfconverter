@@ -5,7 +5,16 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
+const os = require('os');
+const uploadsDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../../uploads');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {}
 
 // ─── OCR ─────────────────────────────────────────────────
 exports.ocr = async (req, res) => {

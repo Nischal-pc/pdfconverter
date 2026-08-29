@@ -16,10 +16,17 @@ const historyRoutes = require('./routes/history.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const os = require('os');
+const uploadsDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../uploads');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('⚠️ uploadsDir creation notice:', err.message);
 }
 
 // Middleware
@@ -143,10 +150,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Scheduled cleanup: delete files older than 1 hour
-cron.schedule('0 * * * *', () => {
-  cleanupOldFiles(uploadsDir, 60);
-});
+// Scheduled cleanup: delete files older than 1 hour (non-serverless only)
+if (!process.env.VERCEL) {
+  cron.schedule('0 * * * *', () => {
+    cleanupOldFiles(uploadsDir, 60);
+  });
+}
 
 // Connect to MongoDB and start server
 const startServer = async () => {

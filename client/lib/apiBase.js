@@ -8,13 +8,13 @@
  * for every device that isn't the developer's machine.
  */
 export function getApiBase() {
-  // In the browser, always use same-origin (works on Vercel, custom domains, any device)
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-  // Server-side rendering: use explicit env var or fall back to local dev server
+  // If an explicit API URL is set in environment (e.g. separate backend deployment), use it
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+  // In the browser, use same-origin (Vercel monorepo / serverless deployment)
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
   }
   return 'http://localhost:5000';
 }
