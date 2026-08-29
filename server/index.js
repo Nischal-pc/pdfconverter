@@ -16,6 +16,8 @@ const historyRoutes = require('./routes/history.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.set('trust proxy', 1);
+
 const os = require('os');
 const uploadsDir = process.env.VERCEL
   ? path.join(os.tmpdir(), 'uploads')
