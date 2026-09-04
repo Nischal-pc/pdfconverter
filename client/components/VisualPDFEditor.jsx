@@ -35,8 +35,12 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
 
   // Annotations stored by page index (0-indexed): array of items
   const [annotations, setAnnotations] = useState([]);
+  const annotationsRef = useRef([]);
+  annotationsRef.current = annotations;
+
   const [selectedId, setSelectedId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDraggingAny, setIsDraggingAny] = useState(false);
 
   // Signature Modal state
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
@@ -51,6 +55,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
   const containerRef = useRef(null);
   const isDrawingSig = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
+  const dragInfoRef = useRef(null);
 
   // Load PDF.js Document
   useEffect(() => {
@@ -104,12 +109,19 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
 
   // Handle clicking on document canvas to place text or stamp
   const handleCanvasClick = (e) => {
+    if (dragInfoRef.current?.hasMoved) {
+      // Don't place or deselect if this was a drag gesture
+      return;
+    }
+
     if (activeTool === 'select') {
       setSelectedId(null);
       return;
     }
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
@@ -121,9 +133,9 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
         id: `text-${Date.now()}`,
         type: 'text',
         page: currentPage - 1,
-        xPercent: Math.max(2, Math.min(80, xPercent)),
+        xPercent: Math.max(2, Math.min(75, xPercent)),
         yPercent: Math.max(2, Math.min(90, yPercent)),
-        widthPercent: 28,
+        widthPercent: 26,
         heightPercent: 6,
         text: 'Type text here...',
         fontSize: 16,
@@ -133,6 +145,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
       setAnnotations((prev) => [...prev, newText]);
       setSelectedId(newText.id);
       setActiveTool('select');
+      toast.success('Text added! Drag the handle to move anywhere.');
     } else if (activeTool === 'date') {
       const today = new Date().toLocaleDateString(undefined, {
         year: 'numeric',
@@ -143,9 +156,9 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
         id: `date-${Date.now()}`,
         type: 'text',
         page: currentPage - 1,
-        xPercent: Math.max(2, Math.min(80, xPercent)),
+        xPercent: Math.max(2, Math.min(75, xPercent)),
         yPercent: Math.max(2, Math.min(90, yPercent)),
-        widthPercent: 22,
+        widthPercent: 20,
         heightPercent: 5,
         text: today,
         fontSize: 14,
@@ -155,6 +168,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
       setAnnotations((prev) => [...prev, newDate]);
       setSelectedId(newDate.id);
       setActiveTool('select');
+      toast.success('Date stamp placed! Drag anywhere to position.');
     } else if (activeTool === 'check') {
       const checkCanvas = document.createElement('canvas');
       checkCanvas.width = 64;
@@ -183,53 +197,77 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
       setAnnotations((prev) => [...prev, newCheck]);
       setSelectedId(newCheck.id);
       setActiveTool('select');
+      toast.success('Checkmark placed! Drag anywhere on the page.');
     }
   };
 
   // Dragging & Resizing annotations across canvas
   const handleDragStart = (e, id, mode = 'move') => {
-    e.stopPropagation();
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+    // If clicking on text input or select control, don't initiate drag unless from drag handle
+    const targetTag = e.target.tagName;
+    if ((targetTag === 'INPUT' || targetTag === 'TEXTAREA' || targetTag === 'SELECT') && !e.target.closest('.annotation-drag-handle')) {
       setSelectedId(id);
       return;
     }
-    e.preventDefault();
+
+    e.stopPropagation();
     setSelectedId(id);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const canvasRect = canvas.getBoundingClientRect();
 
-    const startClientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const startClientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    const targetItem = annotations.find((item) => item.id === id);
-    if (!targetItem) return;
+    const currentItem = annotationsRef.current.find((item) => item.id === id);
+    if (!currentItem) return;
 
-    const startXPercent = targetItem.xPercent;
-    const startYPercent = targetItem.yPercent;
-    const startWidthPercent = targetItem.widthPercent;
-    const startHeightPercent = targetItem.heightPercent;
+    dragInfoRef.current = {
+      id,
+      mode,
+      startClientX: clientX,
+      startClientY: clientY,
+      startXPercent: currentItem.xPercent,
+      startYPercent: currentItem.yPercent,
+      startWidthPercent: currentItem.widthPercent,
+      startHeightPercent: currentItem.heightPercent,
+      canvasRect,
+      hasMoved: false,
+    };
+
+    setIsDraggingAny(true);
 
     const onPointerMove = (moveEvent) => {
+      if (!dragInfoRef.current) return;
+      const info = dragInfoRef.current;
+
       const currentClientX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const currentClientY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
-      const deltaX = currentClientX - startClientX;
-      const deltaY = currentClientY - startClientY;
+      const deltaX = currentClientX - info.startClientX;
+      const deltaY = currentClientY - info.startClientY;
 
-      const deltaXPercent = (deltaX / canvasRect.width) * 100;
-      const deltaYPercent = (deltaY / canvasRect.height) * 100;
+      if (!info.hasMoved && (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)) {
+        info.hasMoved = true;
+      }
 
-      if (mode === 'move') {
-        const newX = Math.max(0, Math.min(100 - startWidthPercent, startXPercent + deltaXPercent));
-        const newY = Math.max(0, Math.min(100 - startHeightPercent, startYPercent + deltaYPercent));
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+
+      const deltaXPercent = (deltaX / info.canvasRect.width) * 100;
+      const deltaYPercent = (deltaY / info.canvasRect.height) * 100;
+
+      if (info.mode === 'move') {
+        const newX = Math.max(0, Math.min(100 - info.startWidthPercent, info.startXPercent + deltaXPercent));
+        const newY = Math.max(0, Math.min(100 - info.startHeightPercent, info.startYPercent + deltaYPercent));
         setAnnotations((prev) =>
           prev.map((item) => (item.id === id ? { ...item, xPercent: newX, yPercent: newY } : item))
         );
-      } else if (mode === 'resize') {
-        const newWidth = Math.max(4, Math.min(100 - startXPercent, startWidthPercent + deltaXPercent));
-        const newHeight = Math.max(3, Math.min(100 - startYPercent, startHeightPercent + deltaYPercent));
+      } else if (info.mode === 'resize') {
+        const newWidth = Math.max(4, Math.min(100 - info.startXPercent, info.startWidthPercent + deltaXPercent));
+        const newHeight = Math.max(3, Math.min(100 - info.startYPercent, info.startHeightPercent + deltaYPercent));
         setAnnotations((prev) =>
           prev.map((item) => (item.id === id ? { ...item, widthPercent: newWidth, heightPercent: newHeight } : item))
         );
@@ -237,10 +275,18 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
     };
 
     const onPointerUp = () => {
+      setIsDraggingAny(false);
       window.removeEventListener('mousemove', onPointerMove);
       window.removeEventListener('mouseup', onPointerUp);
       window.removeEventListener('touchmove', onPointerMove);
       window.removeEventListener('touchend', onPointerUp);
+
+      // Reset drag hasMoved after short microtask so click doesn't deselect
+      setTimeout(() => {
+        if (dragInfoRef.current) {
+          dragInfoRef.current.hasMoved = false;
+        }
+      }, 50);
     };
 
     window.addEventListener('mousemove', onPointerMove, { passive: false });
@@ -255,10 +301,60 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
     );
   };
 
+  const duplicateAnnotation = (id) => {
+    const item = annotations.find((a) => a.id === id);
+    if (!item) return;
+    const duplicated = {
+      ...item,
+      id: `${item.type}-${Date.now()}`,
+      xPercent: Math.min(80, item.xPercent + 3),
+      yPercent: Math.min(85, item.yPercent + 3),
+    };
+    setAnnotations((prev) => [...prev, duplicated]);
+    setSelectedId(duplicated.id);
+    toast.success('Element duplicated!');
+  };
+
   const deleteAnnotation = (id) => {
     setAnnotations((prev) => prev.filter((item) => item.id !== id));
     if (selectedId === id) setSelectedId(null);
   };
+
+  // Keyboard shortcut listener for selected annotations
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedId) return;
+      const targetTag = e.target.tagName;
+      if (targetTag === 'INPUT' || targetTag === 'TEXTAREA' || targetTag === 'SELECT') {
+        return;
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        deleteAnnotation(selectedId);
+      } else if (e.key === 'Escape') {
+        setSelectedId(null);
+      } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 2 : 0.5;
+        setAnnotations((prev) =>
+          prev.map((item) => {
+            if (item.id !== selectedId) return item;
+            let nx = item.xPercent;
+            let ny = item.yPercent;
+            if (e.key === 'ArrowLeft') nx = Math.max(0, nx - step);
+            if (e.key === 'ArrowRight') nx = Math.min(100 - item.widthPercent, nx + step);
+            if (e.key === 'ArrowUp') ny = Math.max(0, ny - step);
+            if (e.key === 'ArrowDown') ny = Math.min(100 - item.heightPercent, ny + step);
+            return { ...item, xPercent: nx, yPercent: ny };
+          })
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedId]);
 
   // Signature Pad Drawing Logic
   const startDrawing = (e) => {
@@ -380,7 +476,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
         setAnnotations((prev) => [...prev, newSig]);
         setSelectedId(newSig.id);
         setIsSignModalOpen(false);
-        toast.success('Signature uploaded and placed!');
+        toast.success('Signature uploaded and placed! Drag to move anywhere.');
       }
     };
     reader.readAsDataURL(file);
@@ -431,7 +527,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
   );
 
   return (
-    <div className="visual-editor-wrapper">
+    <div className="visual-editor-container">
       {/* Top Floating Action Toolbar */}
       <div className="visual-editor-topbar">
         <div className="topbar-group">
@@ -439,10 +535,10 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             type="button"
             className={`editor-tool-btn ${activeTool === 'select' ? 'active' : ''}`}
             onClick={() => setActiveTool('select')}
-            title="Select & Move"
+            title="Select & Move Items"
           >
             <Move size={16} />
-            <span>Move</span>
+            <span>Move Tool</span>
           </button>
 
           <button
@@ -453,7 +549,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             }}
           >
             <PenTool size={16} />
-            <span>+ Sign Document</span>
+            <span>+ Add Signature</span>
           </button>
 
           <button
@@ -461,7 +557,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             className={`editor-tool-btn ${activeTool === 'text' ? 'active' : ''}`}
             onClick={() => {
               setActiveTool('text');
-              toast('Click anywhere on the PDF page to type text');
+              toast('Click anywhere on the PDF to place a text box');
             }}
           >
             <Type size={16} />
@@ -595,28 +691,33 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
             return (
               <div
                 key={ann.id}
-                className={`annotation-item ${isSelected ? 'selected' : ''}`}
+                className={`annotation-item ${isSelected ? 'selected' : ''} ${isDraggingAny && isSelected ? 'is-dragging' : ''}`}
                 style={{
                   position: 'absolute',
                   left: `${ann.xPercent}%`,
                   top: `${ann.yPercent}%`,
                   width: `${ann.widthPercent}%`,
                   minHeight: `${ann.heightPercent}%`,
-                  cursor: 'move',
                   userSelect: 'none',
+                  touchAction: 'none',
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedId(ann.id);
                 }}
                 onMouseDown={(e) => handleDragStart(e, ann.id, 'move')}
                 onTouchStart={(e) => handleDragStart(e, ann.id, 'move')}
               >
-                {/* Drag Indicator Badge */}
-                {isSelected && (
+                {/* Drag Handle Top Bar for Text Boxes */}
+                {ann.type === 'text' && (
                   <div
-                    className="annotation-drag-badge"
-                    title="Drag anywhere to move"
+                    className="annotation-drag-handle"
+                    title="Click and drag to move anywhere on the page"
                     onMouseDown={(e) => handleDragStart(e, ann.id, 'move')}
                     onTouchStart={(e) => handleDragStart(e, ann.id, 'move')}
                   >
-                    <Move size={10} />
+                    <Move size={12} className="handle-icon" />
+                    <span className="handle-label">Drag to move</span>
                   </div>
                 )}
 
@@ -628,10 +729,15 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                       value={ann.text}
                       onChange={(e) => updateAnnotation(ann.id, { text: e.target.value })}
                       onFocus={() => setSelectedId(ann.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedId(ann.id);
+                      }}
+                      placeholder="Type text here..."
                       style={{
                         width: '100%',
                         fontSize: `${ann.fontSize || 16}px`,
-                        color: ann.color || '#000000',
+                        color: ann.color || '#0f172a',
                         fontFamily: ann.font === 'times' ? 'serif' : ann.font === 'courier' ? 'monospace' : 'sans-serif',
                         fontWeight: ann.bold ? 'bold' : 'normal',
                         fontStyle: ann.italic ? 'italic' : 'normal',
@@ -639,6 +745,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                         border: 'none',
                         outline: 'none',
                         cursor: 'text',
+                        padding: '2px 4px',
                       }}
                     />
                   </div>
@@ -656,6 +763,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                         height: '100%',
                         objectFit: 'contain',
                         pointerEvents: 'none',
+                        userSelect: 'none',
                       }}
                     />
                   </div>
@@ -665,9 +773,15 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                 {isSelected && (
                   <div
                     className="annotation-resize-handle"
-                    title="Drag to resize"
-                    onMouseDown={(e) => handleDragStart(e, ann.id, 'resize')}
-                    onTouchStart={(e) => handleDragStart(e, ann.id, 'resize')}
+                    title="Drag to resize width & height"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleDragStart(e, ann.id, 'resize');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleDragStart(e, ann.id, 'resize');
+                    }}
                   />
                 )}
 
@@ -675,7 +789,9 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                 {isSelected && (
                   <div
                     className="annotation-floating-bar"
+                    onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                   >
                     {ann.type === 'text' && (
                       <>
@@ -686,6 +802,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                             updateAnnotation(ann.id, { fontSize: parseInt(e.target.value, 10) })
                           }
                           className="floating-select"
+                          title="Font size"
                         >
                           <option value={12}>12px</option>
                           <option value={14}>14px</option>
@@ -695,13 +812,47 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                           <option value={32}>32px</option>
                         </select>
 
+                        {/* Font Family */}
+                        <select
+                          value={ann.font || 'helvetica'}
+                          onChange={(e) => updateAnnotation(ann.id, { font: e.target.value })}
+                          className="floating-select"
+                          title="Font style"
+                        >
+                          <option value="helvetica">Sans</option>
+                          <option value="times">Serif</option>
+                          <option value="courier">Mono</option>
+                        </select>
+
+                        {/* Bold toggle */}
+                        <button
+                          type="button"
+                          className={`floating-btn ${ann.bold ? 'active' : ''}`}
+                          style={{ fontWeight: 'bold' }}
+                          onClick={() => updateAnnotation(ann.id, { bold: !ann.bold })}
+                          title="Toggle Bold"
+                        >
+                          B
+                        </button>
+
+                        {/* Italic toggle */}
+                        <button
+                          type="button"
+                          className={`floating-btn ${ann.italic ? 'active' : ''}`}
+                          style={{ fontStyle: 'italic' }}
+                          onClick={() => updateAnnotation(ann.id, { italic: !ann.italic })}
+                          title="Toggle Italic"
+                        >
+                          I
+                        </button>
+
                         {/* Color preset */}
                         <input
                           type="color"
                           value={ann.color || '#0f172a'}
                           onChange={(e) => updateAnnotation(ann.id, { color: e.target.value })}
                           className="floating-color-picker"
-                          title="Color"
+                          title="Text color"
                         />
                       </>
                     )}
@@ -712,7 +863,7 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                       className="floating-btn"
                       onClick={() =>
                         updateAnnotation(ann.id, {
-                          widthPercent: Math.max(10, ann.widthPercent - 4),
+                          widthPercent: Math.max(8, ann.widthPercent - 4),
                         })
                       }
                       title="Shrink width"
@@ -724,12 +875,22 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
                       className="floating-btn"
                       onClick={() =>
                         updateAnnotation(ann.id, {
-                          widthPercent: Math.min(90, ann.widthPercent + 4),
+                          widthPercent: Math.min(95, ann.widthPercent + 4),
                         })
                       }
                       title="Enlarge width"
                     >
                       +
+                    </button>
+
+                    {/* Duplicate button */}
+                    <button
+                      type="button"
+                      className="floating-btn"
+                      onClick={() => duplicateAnnotation(ann.id)}
+                      title="Duplicate"
+                    >
+                      <Sparkles size={13} />
                     </button>
 
                     {/* Delete button */}
