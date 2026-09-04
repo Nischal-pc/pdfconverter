@@ -757,18 +757,25 @@ exports.visualEditPDF = async (req, res) => {
     const fontMap = {
       helvetica: StandardFonts.Helvetica,
       helveticaBold: StandardFonts.HelveticaBold,
+      helveticaItalic: StandardFonts.HelveticaOblique,
+      helveticaBoldItalic: StandardFonts.HelveticaBoldOblique,
       times: StandardFonts.TimesRoman,
+      timesBold: StandardFonts.TimesRomanBold,
+      timesItalic: StandardFonts.TimesRomanItalic,
+      timesBoldItalic: StandardFonts.TimesRomanBoldItalic,
       courier: StandardFonts.Courier,
-      italic: StandardFonts.TimesRomanItalic,
+      courierBold: StandardFonts.CourierBold,
+      courierItalic: StandardFonts.CourierOblique,
+      courierBoldItalic: StandardFonts.CourierBoldOblique,
     };
 
     const embeddedFonts = {};
-    const getFont = async (fontName) => {
-      const key = fontMap[fontName] || StandardFonts.Helvetica;
-      if (!embeddedFonts[key]) {
-        embeddedFonts[key] = await doc.embedFont(key);
+    const getFont = async (fontKey) => {
+      const standardFontName = fontMap[fontKey] || StandardFonts.Helvetica;
+      if (!embeddedFonts[standardFontName]) {
+        embeddedFonts[standardFontName] = await doc.embedFont(standardFontName);
       }
-      return embeddedFonts[key];
+      return embeddedFonts[standardFontName];
     };
 
     const modifiedPages = new Set();
@@ -779,16 +786,16 @@ exports.visualEditPDF = async (req, res) => {
       const { width: pageWidth, height: pageHeight } = page.getSize();
       modifiedPages.add(pageIndex);
 
-      const xPercent = parseFloat(ann.xPercent ?? ((ann.x || 0) / pageWidth * 100));
-      const yPercent = parseFloat(ann.yPercent ?? ((ann.y || 0) / pageHeight * 100));
+      const xPercent = parseFloat(ann.xPercent ?? 0);
+      const yPercent = parseFloat(ann.yPercent ?? 0);
       const widthPercent = parseFloat(ann.widthPercent ?? 20);
       const heightPercent = parseFloat(ann.heightPercent ?? 8);
 
-      const targetX = (xPercent / 100) * pageWidth;
-      const targetW = (widthPercent / 100) * pageWidth;
-      const targetH = (heightPercent / 100) * pageHeight;
-      // In PDF coordinate system, Y=0 is at the bottom
-      const targetY = pageHeight - ((yPercent / 100) * pageHeight) - targetH;
+      const boxX = (xPercent / 100) * pageWidth;
+      const boxW = (widthPercent / 100) * pageWidth;
+      const boxH = (heightPercent / 100) * pageHeight;
+      const topY = pageHeight - ((yPercent / 100) * pageHeight);
+      const bottomY = topY - boxH;
 
       if (ann.dataUrl && (ann.type === 'signature' || ann.type === 'image' || ann.type === 'stamp' || ann.type === 'checkmark' || ann.dataUrl.startsWith('data:image'))) {
         try {
@@ -800,29 +807,89 @@ exports.visualEditPDF = async (req, res) => {
           } catch {
             embeddedImage = await doc.embedJpg(imgBuffer);
           }
+
+          const imgW = embeddedImage.width || 100;
+          const imgH = embeddedImage.height || 50;
+          const imgAspect = imgW / imgH;
+          const boxAspect = boxW / boxH;
+
+          let drawW = boxW;
+          let drawH = boxH;
+          let drawX = boxX;
+          let drawY = bottomY;
+
+          // Preserve exact aspect ratio within bounding box as rendered in browser (object-fit: contain)
+          if (imgAspect > boxAspect) {
+            drawW = boxW;
+            drawH = boxW / imgAspect;
+            drawX = boxX;
+            drawY = bottomY + (boxH - drawH) / 2;
+          } else {
+            drawH = boxH;
+            drawW = boxH * imgAspect;
+            drawX = boxX + (boxW - drawW) / 2;
+            drawY = bottomY;
+          }
+
           const opacity = Math.min(1, Math.max(0.1, parseFloat(ann.opacity || '1')));
           page.drawImage(embeddedImage, {
-            x: Math.max(0, targetX),
-            y: Math.max(0, targetY),
-            width: Math.max(10, targetW),
-            height: Math.max(10, targetH),
+            x: Math.max(0, drawX),
+            y: Math.max(0, drawY),
+            width: Math.max(2, drawW),
+            height: Math.max(2, drawH),
             opacity,
           });
         } catch (imgErr) {
           console.warn('Failed to embed annotation image:', imgErr.message);
         }
       } else if (ann.text) {
-        const font = await getFont(ann.font || 'helvetica');
+        let fontKey = ann.font || 'helvetica';
+        if (fontKey === 'times') {
+          if (ann.bold && ann.italic) fontKey = 'timesBoldItalic';
+          else if (ann.bold) fontKey = 'timesBold';
+          else if (ann.italic) fontKey = 'timesItalic';
+          else fontKey = 'times';
+        } else if (fontKey === 'courier') {
+          if (ann.bold && ann.italic) fontKey = 'courierBoldItalic';
+          else if (ann.bold) fontKey = 'courierBold';
+          else if (ann.italic) fontKey = 'courierItalic';
+          else fontKey = 'courier';
+        } else {
+          if (ann.bold && ann.italic) fontKey = 'helveticaBoldItalic';
+          else if (ann.bold) fontKey = 'helveticaBold';
+          else if (ann.italic) fontKey = 'helveticaItalic';
+          else fontKey = 'helvetica';
+        }
+
+        const font = await getFont(fontKey);
         const color = hexToRgb(ann.color || '#000000');
-        const fontSizeRatio = parseFloat(ann.fontSizeRatio || '0.025');
-        const calculatedFontSize = Math.max(8, Math.min(72, fontSizeRatio ? fontSizeRatio * pageHeight : parseFloat(ann.fontSize || 14)));
+        const scale = parseFloat(ann.scale) || 1.1;
+
+        // Accurate font point size matching the exact visual proportions on screen
+        const calculatedFontSize = Math.max(
+          6,
+          Math.min(
+            120,
+            ann.fontSizePt
+              ? parseFloat(ann.fontSizePt)
+              : ann.fontSize
+              ? parseFloat(ann.fontSize) / scale
+              : 14
+          )
+        );
+
         const textLines = String(ann.text).split('\n');
-        const lineHeight = calculatedFontSize * (parseFloat(ann.lineHeight || 1.25));
+        const lineHeight = calculatedFontSize * (parseFloat(ann.lineHeight) || 1.25);
+
+        // First line baseline offset from top of box (font ascent ~0.85 + CSS screen padding 2px)
+        const textPadX = 4 / scale;
+        const textPadY = 2 / scale;
+        const firstLineBaseline = topY - (calculatedFontSize * 0.85) - textPadY;
 
         textLines.forEach((line, lineIdx) => {
-          const lineY = targetY + targetH - ((lineIdx + 1) * calculatedFontSize);
+          const lineY = firstLineBaseline - (lineIdx * lineHeight);
           page.drawText(line, {
-            x: Math.max(0, targetX),
+            x: Math.max(0, boxX + textPadX),
             y: Math.max(0, lineY),
             size: calculatedFontSize,
             font,

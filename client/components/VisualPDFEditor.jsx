@@ -446,8 +446,9 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
       xPercent: 35,
       yPercent: 45,
       widthPercent: 25,
-      heightPercent: 10,
+      heightPercent: sigTab === 'type' ? 6 : 7.5,
       dataUrl: sigDataUrl,
+      scale,
     };
 
     setAnnotations((prev) => [...prev, newSig]);
@@ -463,20 +464,28 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
     reader.onload = (uploadEvent) => {
       const dataUrl = uploadEvent.target?.result;
       if (dataUrl) {
-        const newSig = {
-          id: `sig-${Date.now()}`,
-          type: 'signature',
-          page: currentPage - 1,
-          xPercent: 35,
-          yPercent: 45,
-          widthPercent: 25,
-          heightPercent: 10,
-          dataUrl,
+        const img = new Image();
+        img.onload = () => {
+          const aspect = (img.naturalWidth || 400) / (img.naturalHeight || 120);
+          const wPercent = 25;
+          const hPercent = Math.max(3, Math.min(30, (wPercent / aspect) * 0.75));
+          const newSig = {
+            id: `sig-${Date.now()}`,
+            type: 'signature',
+            page: currentPage - 1,
+            xPercent: 35,
+            yPercent: 45,
+            widthPercent: wPercent,
+            heightPercent: hPercent,
+            dataUrl,
+            scale,
+          };
+          setAnnotations((prev) => [...prev, newSig]);
+          setSelectedId(newSig.id);
+          setIsSignModalOpen(false);
+          toast.success('Signature uploaded and placed! Drag to move anywhere.');
         };
-        setAnnotations((prev) => [...prev, newSig]);
-        setSelectedId(newSig.id);
-        setIsSignModalOpen(false);
-        toast.success('Signature uploaded and placed! Drag to move anywhere.');
+        img.src = dataUrl;
       }
     };
     reader.readAsDataURL(file);
@@ -493,9 +502,15 @@ export default function VisualPDFEditor({ file, onCancel, onDone }) {
     const toastId = toast.loading('Applying signatures and text to PDF...');
 
     try {
+      const exportAnnotations = annotations.map((ann) => ({
+        ...ann,
+        scale,
+        fontSizePt: (ann.fontSize || 16) / scale,
+      }));
+
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('annotations', JSON.stringify(annotations));
+      formData.append('annotations', JSON.stringify(exportAnnotations));
 
       const data = await uploadAndProcess('/api/pdf/visual-edit', formData);
 
